@@ -1,0 +1,22 @@
+version: "1.0"
+workspace:
+  name: "test-workspace"
+  python_version: "3.12"
+
+repositories:
+  - name: "buvis-pybase"
+    url: "https://github.com/buvis/buvis-pybase.git"
+    package_name: "buvis-pybase"
+    branch: "main"
+    dependencies: []
+    
+  - name: "doogat-core"
+    url: "https://github.com/doogat/doogat-core.git"
+    package_name: "doogat-core"
+    branch: "main"
+    dependencies: ["buvis-pybase"]
+
+settings:
+  auto_install_hooks: true
+  use_test_pypi: true
+  parallel_jobs: 4
