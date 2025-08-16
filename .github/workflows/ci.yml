@@ -94,5 +94,8 @@ jobs:
       - name: Run Ruff
         run: poetry run ruff check .
 
+      - name: Run pylint
+        run: poetry run pylint --errors-only src/
+
       - name: Run mypy
         run: poetry run mypy . --ignore-missing-imports
