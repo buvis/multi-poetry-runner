@@ -5,7 +5,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from multi_poetry_runner.core.workspace import WorkspaceManager
 from multi_poetry_runner.utils.config import ConfigManager
 

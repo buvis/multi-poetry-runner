@@ -1,15 +1,15 @@
 """Dependency management functionality."""
 
-import subprocess
 import shutil
-import toml
+import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any
 
+import toml
 from rich.console import Console
-from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 
 from ..utils.config import ConfigManager, RepositoryConfig
 from ..utils.logger import get_logger
@@ -27,8 +27,6 @@ class DependencyManager:
 
     def switch_to_local(self, dry_run: bool = False) -> bool:
         """Switch all repositories to use local path dependencies."""
-        config = self.config_manager.load_config()
-
         # Create backup
         if not dry_run:
             self._create_backup()
@@ -68,8 +66,6 @@ class DependencyManager:
 
     def switch_to_remote(self, dry_run: bool = False) -> bool:
         """Switch all repositories to use remote version dependencies."""
-        config = self.config_manager.load_config()
-
         # Process repositories in dependency order
         dependency_order = self.config_manager.get_dependency_order()
 
@@ -105,8 +101,6 @@ class DependencyManager:
 
     def switch_to_test(self, dry_run: bool = False) -> bool:
         """Switch all repositories to use test-pypi dependencies."""
-        config = self.config_manager.load_config()
-
         # Process repositories in dependency order
         dependency_order = self.config_manager.get_dependency_order()
 
@@ -148,12 +142,7 @@ class DependencyManager:
             logger.warning(f"No pyproject.toml found in {repo.name}")
             return
 
-        # Read current pyproject.toml
-        with open(pyproject_path, "r") as f:
-            pyproject_data = toml.load(f)
-
         # Get dependencies for this repository
-        config = self.config_manager.load_config()
 
         for dep_name in repo.dependencies:
             dep_repo = self.config_manager.get_repository(dep_name)
@@ -280,7 +269,7 @@ class DependencyManager:
                 check=True,
                 capture_output=True,
             )
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             # If normal add fails, try adding without dependency resolution
             logger.warning(
                 f"Normal poetry add failed for {package_name}, trying direct pyproject.toml edit"
@@ -294,7 +283,7 @@ class DependencyManager:
         pyproject_path = repo.path / "pyproject.toml"
 
         try:
-            with open(pyproject_path, "r") as f:
+            with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
 
             # Initialize dependencies if not exists
@@ -364,7 +353,7 @@ class DependencyManager:
             self._ensure_test_pypi_source(repo)
 
             # Add dependency from test-pypi
-            version_spec = f"^{version}"
+            version = f"^{version}"
             subprocess.run(
                 [
                     "poetry",
@@ -412,7 +401,7 @@ class DependencyManager:
         pyproject_path = repo.path / "pyproject.toml"
 
         try:
-            with open(pyproject_path, "r") as f:
+            with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
 
             # Initialize tool.poetry.source if not exists
@@ -455,7 +444,7 @@ class DependencyManager:
         pyproject_path = repo.path / "pyproject.toml"
 
         try:
-            with open(pyproject_path, "r") as f:
+            with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
 
             # Initialize dependencies if not exists
@@ -482,7 +471,7 @@ class DependencyManager:
             logger.error(f"Failed to directly edit pyproject.toml for {repo.name}: {e}")
             raise
 
-    def _get_current_version(self, repo: RepositoryConfig) -> Optional[str]:
+    def _get_current_version(self, repo: RepositoryConfig) -> str | None:
         """Get current version from repository's pyproject.toml."""
         pyproject_path = repo.path / "pyproject.toml"
 
@@ -490,7 +479,7 @@ class DependencyManager:
             return None
 
         try:
-            with open(pyproject_path, "r") as f:
+            with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
 
             return pyproject_data.get("tool", {}).get("poetry", {}).get("version")
@@ -504,7 +493,6 @@ class DependencyManager:
 
         try:
             # Simple case: both repositories are siblings in repos/ directory
-            from_name = from_path.name
             to_name = to_path.name
 
             # Check if both are in repos/ directory
@@ -572,7 +560,7 @@ class DependencyManager:
         if marker_file.exists():
             marker_file.unlink()
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get dependency status for all repositories."""
         config = self.config_manager.load_config()
         status = {"workspace_mode": self._get_workspace_mode(), "repositories": []}
@@ -613,7 +601,7 @@ class DependencyManager:
 
     def _analyze_repo_dependencies_detailed(
         self, repo: RepositoryConfig
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze dependencies for a single repository with detailed information."""
         pyproject_path = repo.path / "pyproject.toml"
 
@@ -621,7 +609,7 @@ class DependencyManager:
             return {"mode": "no_pyproject"}
 
         try:
-            with open(pyproject_path, "r") as f:
+            with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
         except toml.TomlDecodeError:
             return {"mode": "invalid_toml"}
@@ -725,7 +713,7 @@ class DependencyManager:
             "mode": mode,
         }
 
-    def _analyze_repo_dependencies(self, repo: RepositoryConfig) -> Dict[str, Any]:
+    def _analyze_repo_dependencies(self, repo: RepositoryConfig) -> dict[str, Any]:
         """Analyze dependencies for a single repository."""
         pyproject_path = repo.path / "pyproject.toml"
 
@@ -733,7 +721,7 @@ class DependencyManager:
             return {"mode": "no_pyproject"}
 
         try:
-            with open(pyproject_path, "r") as f:
+            with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
         except toml.TomlDecodeError:
             return {"mode": "invalid_toml"}
@@ -781,7 +769,7 @@ class DependencyManager:
 
     def display_status(
         self,
-        status: Dict[str, Any],
+        status: dict[str, Any],
         verbose: bool = False,
         show_transitive: bool = False,
     ) -> None:
@@ -938,15 +926,14 @@ class DependencyManager:
             )
         else:
             console.print(
-                f"\n[green bold]✓ All dependencies are compatible[/green bold]"
+                "\n[green bold]✓ All dependencies are compatible[/green bold]"
             )
 
-    def analyze_transitive_dependencies(self) -> Dict[str, Any]:
+    def analyze_transitive_dependencies(self) -> dict[str, Any]:
         """Analyze transitive dependencies across all repositories."""
         config = self.config_manager.load_config()
 
-        # Build dependency graph
-        dependency_graph = {}
+        # Build all packages info
         all_packages = {}
 
         for repo in config.repositories:
@@ -965,7 +952,7 @@ class DependencyManager:
             pyproject_path = repo.path / "pyproject.toml"
             if pyproject_path.exists():
                 try:
-                    with open(pyproject_path, "r") as f:
+                    with open(pyproject_path) as f:
                         pyproject_data = toml.load(f)
 
                     dependencies = (
@@ -1050,8 +1037,8 @@ class DependencyManager:
         }
 
     def _build_dependency_chains(
-        self, package_name: str, all_packages: Dict[str, Any], visited: set
-    ) -> List[List[str]]:
+        self, package_name: str, all_packages: dict[str, Any], visited: set
+    ) -> list[list[str]]:
         """Build dependency chains starting from a package."""
         if package_name in visited:
             return []  # Circular dependency detected
@@ -1079,14 +1066,14 @@ class DependencyManager:
 
         return chains
 
-    def _display_transitive_analysis(self, analysis: Dict[str, Any]) -> None:
+    def _display_transitive_analysis(self, analysis: dict[str, Any]) -> None:
         """Display transitive dependency analysis."""
-        console.print(f"\n[bold]Transitive Dependency Analysis[/bold]")
+        console.print("\n[bold]Transitive Dependency Analysis[/bold]")
 
         # Show dependency chains
         dependency_chains = analysis.get("dependency_chains", {})
         if dependency_chains:
-            console.print(f"\n[bold yellow]Dependency Chains:[/bold yellow]")
+            console.print("\n[bold yellow]Dependency Chains:[/bold yellow]")
             for package_name, chains in dependency_chains.items():
                 if chains:
                     console.print(f"\n[cyan]{package_name}[/cyan]:")
@@ -1098,16 +1085,16 @@ class DependencyManager:
         # Show transitive issues
         transitive_issues = analysis.get("transitive_issues", [])
         if transitive_issues:
-            console.print(f"\n[red bold]Transitive Dependency Issues:[/red bold]")
+            console.print("\n[red bold]Transitive Dependency Issues:[/red bold]")
             for issue in transitive_issues:
                 console.print(f"  [red]•[/red] {issue['chain']}")
                 console.print(
                     f"    {issue['dependency']}: required {issue['required_version']} by {issue['required_by']}, but actual is {issue['actual_version']}"
                 )
         else:
-            console.print(f"\n[green]✓ No transitive dependency issues found[/green]")
+            console.print("\n[green]✓ No transitive dependency issues found[/green]")
 
-    def update_versions(self, target_version: Optional[str] = None) -> None:
+    def update_versions(self, target_version: str | None = None) -> None:
         """Update dependency versions across all repositories."""
         config = self.config_manager.load_config()
 
@@ -1211,7 +1198,7 @@ class DependencyManager:
 
     def _get_required_version(
         self, repo: RepositoryConfig, package_name: str
-    ) -> Optional[str]:
+    ) -> str | None:
         """Get required version for a dependency."""
         pyproject_path = repo.path / "pyproject.toml"
 
@@ -1219,7 +1206,7 @@ class DependencyManager:
             return None
 
         try:
-            with open(pyproject_path, "r") as f:
+            with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
 
             dependencies = (

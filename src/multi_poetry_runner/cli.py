@@ -3,23 +3,20 @@
 Main CLI interface for Multi-Poetry Runner (MPR).
 """
 
+import logging
 import sys
-import subprocess
-import toml
 from pathlib import Path
-from typing import Optional
 
 import click
+import toml
 from rich.console import Console
-from rich.logging import RichHandler
-import logging
 
-from .core.workspace import WorkspaceManager
 from .core.dependencies import DependencyManager
+from .core.hooks import GitHooksManager
 from .core.release import ReleaseCoordinator
 from .core.testing import TestRunner
-from .core.hooks import GitHooksManager
 from .core.version_manager import VersionManager
+from .core.workspace import WorkspaceManager
 from .utils.config import ConfigManager
 from .utils.logger import setup_logging
 
@@ -41,7 +38,7 @@ from . import __version__
 @click.version_option(version=__version__)
 @click.pass_context
 def main(
-    ctx: click.Context, verbose: bool, config: Optional[str], workspace: Optional[str]
+    ctx: click.Context, verbose: bool, config: str | None, workspace: str | None
 ) -> None:
     """Multi-Poetry Runner - Multi-repository development made easy."""
 
@@ -138,8 +135,8 @@ def workspace_clean(ctx: click.Context, force: bool) -> None:
 def workspace_add_repo(
     ctx: click.Context,
     repo_url: str,
-    name: Optional[str],
-    depends: Optional[str],
+    name: str | None,
+    depends: str | None,
     branch: str,
 ) -> None:
     """Add a repository to the workspace."""
@@ -147,7 +144,7 @@ def workspace_add_repo(
         manager = WorkspaceManager(ctx.obj["config_manager"])
         dependencies = depends.split(",") if depends else []
         manager.add_repository(repo_url, name, dependencies, branch)
-        console.print(f"[green]✓ Repository added successfully[/green]")
+        console.print("[green]✓ Repository added successfully[/green]")
     except Exception as e:
         console.print(f"[red]Error adding repository: {e}[/red]")
         sys.exit(1)
@@ -223,7 +220,7 @@ def deps_status(ctx: click.Context, verbose: bool, check_transitive: bool) -> No
 @deps.command("update")
 @click.option("--target-version", help="Target version for all packages")
 @click.pass_context
-def deps_update(ctx: click.Context, target_version: Optional[str]) -> None:
+def deps_update(ctx: click.Context, target_version: str | None) -> None:
     """Update dependency versions."""
     try:
         manager = DependencyManager(ctx.obj["config_manager"])
@@ -339,7 +336,7 @@ def version_bump(
 )
 @click.pass_context
 def version_status(
-    ctx: click.Context, repository: Optional[str], show_dependents: bool
+    ctx: click.Context, repository: str | None, show_dependents: bool
 ) -> None:
     """Show version status for repositories."""
     try:
@@ -354,13 +351,13 @@ def version_status(
 @version.command("diagnose")
 @click.option("--repository", help="Show diagnosis for specific repository only")
 @click.pass_context
-def version_diagnose(ctx: click.Context, repository: Optional[str]) -> None:
+def version_diagnose(ctx: click.Context, repository: str | None) -> None:
     """Diagnose version management issues and show dependency configurations."""
     try:
         manager = VersionManager(ctx.obj["config_manager"])
         config = manager.config_manager.load_config()
 
-        console.print(f"\n[bold]Version Management Diagnosis[/bold]")
+        console.print("\n[bold]Version Management Diagnosis[/bold]")
 
         if repository:
             repo = manager.config_manager.get_repository(repository)
@@ -385,7 +382,7 @@ def version_diagnose(ctx: click.Context, repository: Optional[str]) -> None:
                 pyproject_path = repo.path / "pyproject.toml"
                 if pyproject_path.exists():
                     try:
-                        with open(pyproject_path, "r") as f:
+                        with open(pyproject_path) as f:
                             pyproject_data = toml.load(f)
 
                         dependencies = (
@@ -393,7 +390,7 @@ def version_diagnose(ctx: click.Context, repository: Optional[str]) -> None:
                             .get("poetry", {})
                             .get("dependencies", {})
                         )
-                        console.print(f"  Dependencies in pyproject.toml:")
+                        console.print("  Dependencies in pyproject.toml:")
 
                         if dependencies:
                             for dep_name, dep_spec in dependencies.items():
@@ -406,11 +403,11 @@ def version_diagnose(ctx: click.Context, repository: Optional[str]) -> None:
                     except Exception as e:
                         console.print(f"  [red]Error reading pyproject.toml: {e}[/red]")
                 else:
-                    console.print(f"  [red]No pyproject.toml found[/red]")
+                    console.print("  [red]No pyproject.toml found[/red]")
 
                 # Show expected dependencies based on config
                 if repo.dependencies:
-                    console.print(f"  Expected dependencies (from config):")
+                    console.print("  Expected dependencies (from config):")
                     for dep_name in repo.dependencies:
                         dep_repo = manager.config_manager.get_repository(dep_name)
                         if dep_repo:
@@ -425,13 +422,13 @@ def version_diagnose(ctx: click.Context, repository: Optional[str]) -> None:
                 # Show who depends on this repository
                 dependents = manager._get_dependent_repositories(repo.name)
                 if dependents:
-                    console.print(f"  Dependents:")
+                    console.print("  Dependents:")
                     for dependent in dependents:
                         console.print(f"    {dependent.name}")
                 else:
-                    console.print(f"  [dim]No dependents[/dim]")
+                    console.print("  [dim]No dependents[/dim]")
             else:
-                console.print(f"  [red]Repository path does not exist[/red]")
+                console.print("  [red]Repository path does not exist[/red]")
 
     except Exception as e:
         console.print(f"[red]Error during diagnosis: {e}[/red]")
@@ -487,9 +484,9 @@ def version_sync(ctx: click.Context, dry_run: bool, force: bool) -> None:
 def release_create(
     ctx: click.Context,
     stage: str,
-    repositories: Optional[str],
-    version: Optional[str],
-    repo_versions: Optional[str],
+    repositories: str | None,
+    version: str | None,
+    repo_versions: str | None,
     dry_run: bool,
     skip_tests: bool,
     force: bool,

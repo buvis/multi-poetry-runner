@@ -1,10 +1,10 @@
 """Logging utilities for MPR."""
 
 import logging
-import sys
 from pathlib import Path
-from rich.logging import RichHandler
+
 from rich.console import Console
+from rich.logging import RichHandler
 
 
 def setup_logging(level: int = logging.INFO, log_file: Path = None) -> None:

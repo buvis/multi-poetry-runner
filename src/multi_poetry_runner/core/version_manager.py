@@ -1,16 +1,14 @@
 """Advanced version management functionality for coordinated releases."""
 
+import json
 import re
 import subprocess
-import toml
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-import json
+from typing import Any
 
+import toml
 from rich.console import Console
 from rich.table import Table
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 
 from ..utils.config import ConfigManager, RepositoryConfig
 from ..utils.logger import get_logger
@@ -193,7 +191,7 @@ class VersionManager:
 
             # Step 5: Run validation tests
             if validate and not dry_run:
-                console.print(f"\n[bold]Running validation tests...[/bold]")
+                console.print("\n[bold]Running validation tests...[/bold]")
                 validation_success = self._run_validation_tests(
                     repo, dependents_updated
                 )
@@ -203,7 +201,7 @@ class VersionManager:
 
             # Step 6: Summary
             console.print(
-                f"\n[green bold]✓ Version bump completed successfully![/green bold]"
+                "\n[green bold]✓ Version bump completed successfully![/green bold]"
             )
             console.print(f"  Repository: {repository}")
             console.print(f"  Version: {current_version} → {new_version}")
@@ -222,7 +220,7 @@ class VersionManager:
             logger.error(f"Version bump failed for {repository}: {e}")
             return False
 
-    def _get_current_version(self, repo: RepositoryConfig) -> Optional[str]:
+    def _get_current_version(self, repo: RepositoryConfig) -> str | None:
         """Get current version from repository's pyproject.toml."""
         pyproject_path = repo.path / "pyproject.toml"
 
@@ -230,7 +228,7 @@ class VersionManager:
             return None
 
         try:
-            with open(pyproject_path, "r") as f:
+            with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
 
             return pyproject_data.get("tool", {}).get("poetry", {}).get("version")
@@ -314,7 +312,7 @@ class VersionManager:
         except subprocess.CalledProcessError as e:
             raise Exception(f"Failed to update version for {repo.name}: {e}")
 
-    def _get_dependent_repositories(self, repository: str) -> List[RepositoryConfig]:
+    def _get_dependent_repositories(self, repository: str) -> list[RepositoryConfig]:
         """Get all repositories that depend on the given repository."""
         config = self.config_manager.load_config()
         dependents = []
@@ -337,7 +335,7 @@ class VersionManager:
 
         try:
             # Read current pyproject.toml
-            with open(pyproject_path, "r") as f:
+            with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
 
             # Update dependency version
@@ -421,7 +419,7 @@ class VersionManager:
         new_version: str,
         bump_type: str,
         alpha: bool,
-        dependents_updated: List[Dict[str, str]],
+        dependents_updated: list[dict[str, str]],
     ) -> None:
         """Record version change in history file."""
 
@@ -439,7 +437,7 @@ class VersionManager:
         history = []
         if self.version_history_file.exists():
             try:
-                with open(self.version_history_file, "r") as f:
+                with open(self.version_history_file) as f:
                     history = json.load(f)
             except (json.JSONDecodeError, FileNotFoundError):
                 history = []
@@ -455,7 +453,7 @@ class VersionManager:
             json.dump(history, f, indent=2)
 
     def _run_validation_tests(
-        self, repo: RepositoryConfig, dependents_updated: List[Dict[str, str]]
+        self, repo: RepositoryConfig, dependents_updated: list[dict[str, str]]
     ) -> bool:
         """Run validation tests after version bump."""
 
@@ -510,7 +508,7 @@ class VersionManager:
 
         return True
 
-    def get_version_status(self, repository: Optional[str] = None) -> Dict[str, Any]:
+    def get_version_status(self, repository: str | None = None) -> dict[str, Any]:
         """Get version status for repositories."""
         config = self.config_manager.load_config()
 
@@ -561,7 +559,7 @@ class VersionManager:
 
         return status
 
-    def _get_dependency_info(self, repo: RepositoryConfig) -> List[Dict[str, Any]]:
+    def _get_dependency_info(self, repo: RepositoryConfig) -> list[dict[str, Any]]:
         """Get detailed dependency information for a repository."""
         pyproject_path = repo.path / "pyproject.toml"
 
@@ -569,7 +567,7 @@ class VersionManager:
             return []
 
         try:
-            with open(pyproject_path, "r") as f:
+            with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
 
             dependencies = (
@@ -643,13 +641,13 @@ class VersionManager:
             # Default to compatible for other cases
             return True
 
-    def _get_recent_version_history(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def _get_recent_version_history(self, limit: int = 10) -> list[dict[str, Any]]:
         """Get recent version history."""
         if not self.version_history_file.exists():
             return []
 
         try:
-            with open(self.version_history_file, "r") as f:
+            with open(self.version_history_file) as f:
                 history = json.load(f)
 
             # Return most recent entries
@@ -659,11 +657,11 @@ class VersionManager:
             return []
 
     def display_version_status(
-        self, status: Dict[str, Any], show_dependents: bool = False
+        self, status: dict[str, Any], show_dependents: bool = False
     ) -> None:
         """Display version status in a formatted table."""
 
-        console.print(f"\n[bold]Version Status[/bold]")
+        console.print("\n[bold]Version Status[/bold]")
 
         # Main repository table
         table = Table(title="Repositories")
@@ -742,7 +740,7 @@ class VersionManager:
         # Show recent version history
         history = status.get("version_history", [])
         if history:
-            console.print(f"\n[bold]Recent Version Changes:[/bold]")
+            console.print("\n[bold]Recent Version Changes:[/bold]")
             history_table = Table(show_header=True, header_style="bold")
             history_table.add_column("Date", style="dim")
             history_table.add_column("Repository", style="cyan")
@@ -777,7 +775,7 @@ class VersionManager:
     ) -> bool:
         """Synchronize dependency versions across all repositories."""
 
-        console.print(f"\n[bold]Synchronizing Dependency Versions[/bold]")
+        console.print("\n[bold]Synchronizing Dependency Versions[/bold]")
 
         if dry_run:
             console.print("[dim]DRY RUN MODE - No changes will be made[/dim]")

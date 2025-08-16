@@ -14,7 +14,7 @@ repositories:
     branch: "main"
     dependencies: []
     source: "pypi"
-    
+
   - name: "doogat-core"
     url: "https://github.com/doogat/doogat-core.git"
     package_name: "doogat-core"
@@ -132,8 +132,8 @@ services:
     environment:
       - PYTHONPATH=/app
     command: |
-      python -m pytest /tests/integration 
-      --junit-xml=/reports/results.xml 
+      python -m pytest /tests/integration
+      --junit-xml=/reports/results.xml
       --html=/reports/report.html
       --self-contained-html
 """

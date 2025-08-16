@@ -1,9 +1,9 @@
 """Git hooks management functionality."""
 
-import subprocess
 import shutil
+import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 from rich.console import Console
 from rich.table import Table
@@ -280,7 +280,7 @@ exit 0
 
     def _test_repo_hooks(
         self, repo: RepositoryConfig, verbose: bool = False
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Test hooks in a single repository."""
 
         result = {"success": True, "tests": [], "errors": []}
@@ -373,7 +373,7 @@ exit 0
             )
 
     def _display_hook_test_results(
-        self, test_results: Dict[str, Dict[str, Any]]
+        self, test_results: dict[str, dict[str, Any]]
     ) -> None:
         """Display hook test results."""
 
@@ -406,7 +406,7 @@ exit 0
                 for error in result["errors"]:
                     console.print(f"  - {error}")
 
-    def get_hook_status(self) -> Dict[str, Any]:
+    def get_hook_status(self) -> dict[str, Any]:
         """Get status of Git hooks across repositories."""
         config = self.config_manager.load_config()
 
@@ -454,7 +454,7 @@ exit 0
         except Exception:
             return False
 
-    def display_hook_status(self, status: Dict[str, Any]) -> None:
+    def display_hook_status(self, status: dict[str, Any]) -> None:
         """Display Git hook status."""
 
         console.print(
@@ -483,7 +483,7 @@ exit 0
 
         console.print(table)
 
-    def _format_hook_status(self, hook_info: Dict[str, bool]) -> str:
+    def _format_hook_status(self, hook_info: dict[str, bool]) -> str:
         """Format hook status for display."""
         if not hook_info.get("exists", False):
             return "Not found"

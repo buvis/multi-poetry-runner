@@ -1,10 +1,10 @@
 """Configuration management utilities."""
 
-import os
-import yaml
-from pathlib import Path
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+import yaml
 
 
 @dataclass
@@ -16,7 +16,7 @@ class RepositoryConfig:
     package_name: str
     path: Path
     branch: str = "main"
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     source: str = "pypi"  # pypi, test-pypi, local
 
 
@@ -26,18 +26,18 @@ class WorkspaceConfig:
 
     name: str
     python_version: str = "3.11"
-    repositories: List[RepositoryConfig] = field(default_factory=list)
+    repositories: list[RepositoryConfig] = field(default_factory=list)
 
 
 class ConfigManager:
     """Manages MPR configuration files."""
 
     def __init__(
-        self, config_file: Optional[Path] = None, workspace_root: Optional[Path] = None
+        self, config_file: Path | None = None, workspace_root: Path | None = None
     ):
         self.workspace_root = workspace_root or Path.cwd()
         self.config_file = config_file or self.workspace_root / "mpr-config.yaml"
-        self._config: Optional[WorkspaceConfig] = None
+        self._config: WorkspaceConfig | None = None
 
     def load_config(self) -> WorkspaceConfig:
         """Load configuration from file."""
@@ -47,7 +47,7 @@ class ConfigManager:
         if not self.config_file.exists():
             raise FileNotFoundError(f"Configuration file not found: {self.config_file}")
 
-        with open(self.config_file, "r") as f:
+        with open(self.config_file) as f:
             data = yaml.safe_load(f)
 
         # Parse repositories
@@ -99,7 +99,7 @@ class ConfigManager:
 
         self._config = config
 
-    def get_repository(self, name: str) -> Optional[RepositoryConfig]:
+    def get_repository(self, name: str) -> RepositoryConfig | None:
         """Get repository configuration by name."""
         config = self.load_config()
         for repo in config.repositories:
@@ -119,12 +119,12 @@ class ConfigManager:
         config.repositories.append(repo)
         self.save_config(config)
 
-    def get_dependency_order(self) -> List[str]:
+    def get_dependency_order(self) -> list[str]:
         """Get repositories in dependency order (topological sort)."""
         config = self.load_config()
 
         # Build dependency graph
-        graph: Dict[str, List[str]] = {}
+        graph: dict[str, list[str]] = {}
         for repo in config.repositories:
             graph[repo.name] = repo.dependencies
 
@@ -175,7 +175,7 @@ class ConfigManager:
         """Get path to backups directory."""
         return self.workspace_root / "backups"
 
-    def get_config_template(self) -> Dict[str, Any]:
+    def get_config_template(self) -> dict[str, Any]:
         """Get a template configuration."""
         return {
             "version": "1.0",

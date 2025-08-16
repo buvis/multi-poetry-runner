@@ -2,11 +2,10 @@
 
 import json
 import subprocess
-import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -54,7 +53,7 @@ class TestRunner:
 
     def _run_tests_sequential(
         self,
-        repositories: List[RepositoryConfig],
+        repositories: list[RepositoryConfig],
         test_type: str,
         coverage: bool = False,
     ) -> bool:
@@ -95,7 +94,7 @@ class TestRunner:
 
     def _run_tests_parallel(
         self,
-        repositories: List[RepositoryConfig],
+        repositories: list[RepositoryConfig],
         test_type: str,
         coverage: bool = False,
     ) -> bool:
@@ -357,8 +356,8 @@ services:
     environment:
       - PYTHONPATH=/app
     command: |
-      python -m pytest /tests/integration 
-      --junit-xml=/reports/results.xml 
+      python -m pytest /tests/integration
+      --junit-xml=/reports/results.xml
       --html=/reports/report.html
       --self-contained-html
 """
@@ -421,7 +420,7 @@ import pytest
 def test_package_imports():
     """Test that all packages can be imported."""
 {chr(10).join(imports)}
-    
+
 {chr(10).join(test_code)}
 
 
@@ -475,7 +474,7 @@ async def test_async_operations():
             f"\n[bold]Summary: {passed_tests}/{total_tests} passed, {failed_tests} failed[/bold]"
         )
 
-    def generate_test_report(self, output_format: str = "json") -> Optional[Path]:
+    def generate_test_report(self, output_format: str = "json") -> Path | None:
         """Generate a test report."""
 
         if not self.test_results:
@@ -515,7 +514,7 @@ async def test_async_operations():
 
         return report_path
 
-    def _generate_html_report(self, report_data: Dict[str, Any]) -> str:
+    def _generate_html_report(self, report_data: dict[str, Any]) -> str:
         """Generate HTML test report."""
 
         html_template = """
@@ -541,12 +540,12 @@ async def test_async_operations():
         <p><strong>Workspace:</strong> {workspace}</p>
         <p><strong>Generated:</strong> {timestamp}</p>
     </div>
-    
+
     <div class="summary">
         <h2>Summary</h2>
         <p>Total: {total}, Passed: <span class="passed">{passed}</span>, Failed: <span class="failed">{failed}</span></p>
     </div>
-    
+
     <div class="results">
         <h2>Results</h2>
         <table>

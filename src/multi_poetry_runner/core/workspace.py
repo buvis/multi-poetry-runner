@@ -1,14 +1,14 @@
 """Workspace management functionality."""
 
-import subprocess
 import shutil
+import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any
 from urllib.parse import urlparse
 
 from rich.console import Console
-from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 
 from ..utils.config import ConfigManager, RepositoryConfig, WorkspaceConfig
 from ..utils.logger import get_logger
@@ -123,8 +123,8 @@ status:
     def add_repository(
         self,
         repo_url: str,
-        name: Optional[str] = None,
-        dependencies: Optional[List[str]] = None,
+        name: str | None = None,
+        dependencies: list[str] | None = None,
         branch: str = "main",
     ) -> None:
         """Add a repository to the workspace configuration."""
@@ -235,7 +235,7 @@ status:
         hooks_manager = GitHooksManager(self.config_manager)
         hooks_manager.install_hooks()
 
-    def get_status(self, check_permissions: bool = False) -> Dict[str, Any]:
+    def get_status(self, check_permissions: bool = False) -> dict[str, Any]:
         """Get workspace status."""
         config = self.config_manager.load_config()
 
@@ -414,7 +414,7 @@ status:
         except (PermissionError, OSError):
             return False
 
-    def display_status(self, status: Dict[str, Any]) -> None:
+    def display_status(self, status: dict[str, Any]) -> None:
         """Display workspace status in a formatted table."""
 
         # Workspace info

@@ -124,14 +124,14 @@ def process_data(input_data: str, validate: bool = True) -> dict[str, Any]:
 ```python
 def example_function(param1: str, param2: int) -> bool:
     """Brief description of function.
-    
+
     Args:
         param1: Description of param1
         param2: Description of param2
-        
+
     Returns:
         Description of return value
-        
+
     Raises:
         ValueError: When input is invalid
     """
@@ -206,10 +206,10 @@ def test_workspace_initialization(tmp_path):
     """Test workspace initialization creates required directories."""
     config_manager = Mock()
     config_manager.workspace_root = tmp_path
-    
+
     manager = WorkspaceManager(config_manager)
     manager.initialize_workspace("test-workspace", "3.11")
-    
+
     assert (tmp_path / "repos").exists()
     assert (tmp_path / "logs").exists()
     assert (tmp_path / ".gitignore").exists()

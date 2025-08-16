@@ -1,18 +1,16 @@
 """Release coordination functionality."""
 
-import subprocess
 import shutil
-import tempfile
-import toml
+import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Dict, List, Optional, Any
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any
 
+import toml
 from rich.console import Console
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 from rich.table import Table
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 
 from ..utils.config import ConfigManager, RepositoryConfig
 from ..utils.logger import get_logger
@@ -51,9 +49,9 @@ class ReleaseCoordinator:
     def create_release(
         self,
         stage: str,
-        repositories: Optional[List[str]] = None,
-        version: Optional[str] = None,
-        repository_versions: Optional[Dict[str, str]] = None,
+        repositories: list[str] | None = None,
+        version: str | None = None,
+        repository_versions: dict[str, str] | None = None,
         dry_run: bool = False,
         skip_tests: bool = False,
         force: bool = False,
@@ -231,11 +229,11 @@ class ReleaseCoordinator:
 
     def _process_repositories_sequential(
         self,
-        release_order: List[str],
+        release_order: list[str],
         stage: ReleaseStage,
-        repos_to_release: List[RepositoryConfig],
-        version: Optional[str],
-        repository_versions: Optional[Dict[str, str]],
+        repos_to_release: list[RepositoryConfig],
+        version: str | None,
+        repository_versions: dict[str, str] | None,
         dry_run: bool,
         skip_tests: bool,
         force: bool,
@@ -289,11 +287,11 @@ class ReleaseCoordinator:
 
     def _process_repositories_parallel(
         self,
-        release_order: List[str],
+        release_order: list[str],
         stage: ReleaseStage,
-        repos_to_release: List[RepositoryConfig],
-        version: Optional[str],
-        repository_versions: Optional[Dict[str, str]],
+        repos_to_release: list[RepositoryConfig],
+        version: str | None,
+        repository_versions: dict[str, str] | None,
         dry_run: bool,
         skip_tests: bool,
     ) -> bool:
@@ -368,7 +366,7 @@ class ReleaseCoordinator:
         self,
         repo: RepositoryConfig,
         stage: ReleaseStage,
-        version: Optional[str],
+        version: str | None,
         dry_run: bool,
         skip_tests: bool,
     ) -> bool:
@@ -447,7 +445,7 @@ class ReleaseCoordinator:
             return False
 
     def _determine_version(
-        self, repo: RepositoryConfig, stage: ReleaseStage, version: Optional[str]
+        self, repo: RepositoryConfig, stage: ReleaseStage, version: str | None
     ) -> str:
         """Determine the version for a repository."""
         if version:
@@ -472,7 +470,7 @@ class ReleaseCoordinator:
             # Production release
             return base_version
 
-    def _get_current_version(self, repo: RepositoryConfig) -> Optional[str]:
+    def _get_current_version(self, repo: RepositoryConfig) -> str | None:
         """Get current version from repository."""
         pyproject_path = repo.path / "pyproject.toml"
 
@@ -480,7 +478,7 @@ class ReleaseCoordinator:
             return None
 
         try:
-            with open(pyproject_path, "r") as f:
+            with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
 
             return pyproject_data.get("tool", {}).get("poetry", {}).get("version")
@@ -513,7 +511,7 @@ class ReleaseCoordinator:
                 capture_output=True,
                 timeout=60,  # Add timeout to prevent hanging
             )
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             logger.warning(
                 f"Standard poetry lock failed for {repo.name}, trying --regenerate"
             )
@@ -623,7 +621,7 @@ class ReleaseCoordinator:
             raise
 
     def _update_dependent_repositories(
-        self, released_repos: List[RepositoryConfig]
+        self, released_repos: list[RepositoryConfig]
     ) -> bool:
         """Update dependent repositories to use the new released versions with cascading updates."""
         config = self.config_manager.load_config()
@@ -798,8 +796,8 @@ class ReleaseCoordinator:
             return False
 
     def _find_all_dependent_repositories(
-        self, released_repos: List[RepositoryConfig]
-    ) -> List[RepositoryConfig]:
+        self, released_repos: list[RepositoryConfig]
+    ) -> list[RepositoryConfig]:
         """Find all repositories that depend on the released repos, including cascading dependencies."""
         config = self.config_manager.load_config()
         released_repo_names = {repo.name for repo in released_repos}
@@ -847,7 +845,7 @@ class ReleaseCoordinator:
 
         try:
             # Read current pyproject.toml
-            with open(pyproject_path, "r") as f:
+            with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
 
             # Update dependency version
@@ -1113,7 +1111,7 @@ class ReleaseCoordinator:
 
         console.print(table)
 
-    def get_status(self, verbose: bool = False) -> Dict[str, Any]:
+    def get_status(self, verbose: bool = False) -> dict[str, Any]:
         """Get release status."""
         config = self.config_manager.load_config()
         status = {"workspace": config.name, "repositories": []}
@@ -1133,9 +1131,7 @@ class ReleaseCoordinator:
 
         return status
 
-    def _get_last_release_info(
-        self, repo: RepositoryConfig
-    ) -> Optional[Dict[str, str]]:
+    def _get_last_release_info(self, repo: RepositoryConfig) -> dict[str, str] | None:
         """Get information about the last release."""
         if not repo.path.exists():
             return None
@@ -1187,12 +1183,12 @@ class ReleaseCoordinator:
         except subprocess.CalledProcessError:
             return False
 
-    def _get_detailed_status(self, repo: RepositoryConfig) -> Dict[str, Any]:
+    def _get_detailed_status(self, repo: RepositoryConfig) -> dict[str, Any]:
         """Get detailed repository status."""
         # Implementation for detailed status
         return {}
 
-    def display_status(self, status: Dict[str, Any]) -> None:
+    def display_status(self, status: dict[str, Any]) -> None:
         """Display release status."""
         console.print(
             f"\n[bold]Release Status for workspace: {status['workspace']}[/bold]"

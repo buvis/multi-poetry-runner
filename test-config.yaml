@@ -9,7 +9,7 @@ repositories:
     package_name: "buvis-pybase"
     branch: "main"
     dependencies: []
-    
+
   - name: "doogat-core"
     url: "https://github.com/doogat/doogat-core.git"
     package_name: "doogat-core"

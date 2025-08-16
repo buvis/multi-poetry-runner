@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from multi_poetry_runner.utils.config import (
     ConfigManager,
     RepositoryConfig,
@@ -104,7 +103,7 @@ def test_save_config(temp_workspace):
     config_file = temp_workspace / "mpr-config.yaml"
     assert config_file.exists()
 
-    with open(config_file, "r") as f:
+    with open(config_file) as f:
         data = yaml.safe_load(f)
 
     assert data["workspace"]["name"] == "test-workspace"
