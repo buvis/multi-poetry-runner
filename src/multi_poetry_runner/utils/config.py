@@ -74,7 +74,7 @@ class ConfigManager:
 
     def save_config(self, config: WorkspaceConfig) -> None:
         """Save configuration to file."""
-        data = {
+        data: dict[str, Any] = {
             "version": "1.0",
             "workspace": {"name": config.name, "python_version": config.python_version},
             "repositories": [],
@@ -133,7 +133,7 @@ class ConfigManager:
         temp_visited = set()
         result = []
 
-        def visit(node: str):
+        def visit(node: str) -> None:
             if node in temp_visited:
                 raise ValueError(f"Circular dependency detected involving {node}")
             if node in visited:

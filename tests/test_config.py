@@ -13,7 +13,7 @@ from multi_poetry_runner.utils.config import (
 
 
 @pytest.fixture
-def temp_workspace():
+def temp_workspace() -> Path:
     """Create a temporary workspace directory."""
     with tempfile.TemporaryDirectory() as tmpdir:
         workspace_path = Path(tmpdir)
@@ -21,7 +21,7 @@ def temp_workspace():
 
 
 @pytest.fixture
-def sample_config(temp_workspace):
+def sample_config(temp_workspace) -> Path:
     """Create a sample configuration file."""
     config_data = {
         "version": "1.0",
@@ -53,7 +53,7 @@ def sample_config(temp_workspace):
     return config_file
 
 
-def test_config_manager_init(temp_workspace):
+def test_config_manager_init(temp_workspace) -> None:
     """Test ConfigManager initialization."""
     config_manager = ConfigManager(workspace_root=temp_workspace)
     assert config_manager.workspace_root.resolve() == temp_workspace.resolve()
@@ -63,7 +63,7 @@ def test_config_manager_init(temp_workspace):
     )
 
 
-def test_load_config(temp_workspace, sample_config):
+def test_load_config(temp_workspace, sample_config) -> None:
     """Test loading configuration from file."""
     config_manager = ConfigManager(
         config_file=sample_config, workspace_root=temp_workspace
@@ -84,7 +84,7 @@ def test_load_config(temp_workspace, sample_config):
     assert repo2.dependencies == ["repo1"]
 
 
-def test_save_config(temp_workspace):
+def test_save_config(temp_workspace) -> None:
     """Test saving configuration to file."""
     config_manager = ConfigManager(workspace_root=temp_workspace)
 
@@ -111,7 +111,7 @@ def test_save_config(temp_workspace):
     assert data["repositories"][0]["name"] == "test-repo"
 
 
-def test_get_dependency_order(temp_workspace, sample_config):
+def test_get_dependency_order(temp_workspace, sample_config) -> None:
     """Test dependency order calculation."""
     config_manager = ConfigManager(
         config_file=sample_config, workspace_root=temp_workspace
@@ -123,7 +123,7 @@ def test_get_dependency_order(temp_workspace, sample_config):
     assert order.index("repo1") < order.index("repo2")
 
 
-def test_get_dependency_order_circular(temp_workspace):
+def test_get_dependency_order_circular(temp_workspace) -> None:
     """Test circular dependency detection."""
     config_data = {
         "version": "1.0",
@@ -156,7 +156,7 @@ def test_get_dependency_order_circular(temp_workspace):
         config_manager.get_dependency_order()
 
 
-def test_add_repository(temp_workspace, sample_config):
+def test_add_repository(temp_workspace, sample_config) -> None:
     """Test adding a repository to configuration."""
     config_manager = ConfigManager(
         config_file=sample_config, workspace_root=temp_workspace
@@ -180,7 +180,7 @@ def test_add_repository(temp_workspace, sample_config):
     assert repo3.dependencies == ["repo2"]
 
 
-def test_add_duplicate_repository(temp_workspace, sample_config):
+def test_add_duplicate_repository(temp_workspace, sample_config) -> None:
     """Test adding a duplicate repository raises error."""
     config_manager = ConfigManager(
         config_file=sample_config, workspace_root=temp_workspace
@@ -197,7 +197,7 @@ def test_add_duplicate_repository(temp_workspace, sample_config):
         config_manager.add_repository(duplicate_repo)
 
 
-def test_get_repository(temp_workspace, sample_config):
+def test_get_repository(temp_workspace, sample_config) -> None:
     """Test getting a specific repository."""
     config_manager = ConfigManager(
         config_file=sample_config, workspace_root=temp_workspace

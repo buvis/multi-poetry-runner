@@ -10,7 +10,7 @@ from multi_poetry_runner.cli import main
 
 
 @pytest.fixture
-def temp_workspace():
+def temp_workspace() -> Path:
     """Create a temporary workspace directory."""
     with tempfile.TemporaryDirectory() as tmpdir:
         workspace_path = Path(tmpdir)
@@ -18,20 +18,20 @@ def temp_workspace():
 
 
 @pytest.fixture
-def runner():
+def runner() -> CliRunner:
     """Create a Click test runner."""
 
     return CliRunner()
 
 
-def test_main_help(runner):
+def test_main_help(runner) -> None:
     """Test main help command."""
     result = runner.invoke(main, ["--help"])
     assert result.exit_code == 0
     assert "Multi-Poetry Runner" in result.output
 
 
-def test_workspace_init(runner, temp_workspace):
+def test_workspace_init(runner, temp_workspace) -> None:
     """Test workspace initialization command."""
     with runner.isolated_filesystem():
         result = runner.invoke(
@@ -43,7 +43,7 @@ def test_workspace_init(runner, temp_workspace):
         assert "initialized successfully" in result.output
 
 
-def test_workspace_init_with_python_version(runner, temp_workspace):
+def test_workspace_init_with_python_version(runner, temp_workspace) -> None:
     """Test workspace initialization with custom Python version."""
     with runner.isolated_filesystem():
         result = runner.invoke(
@@ -63,7 +63,7 @@ def test_workspace_init_with_python_version(runner, temp_workspace):
 
 
 @patch("multi_poetry_runner.core.workspace.WorkspaceManager.setup_workspace")
-def test_workspace_setup(mock_setup, runner, temp_workspace):
+def test_workspace_setup(mock_setup, runner, temp_workspace) -> None:
     """Test workspace setup command."""
     # First initialize workspace
     with runner.isolated_filesystem():
@@ -73,15 +73,13 @@ def test_workspace_setup(mock_setup, runner, temp_workspace):
         )
 
         # Then test setup
-        result = runner.invoke(
-            main, ["--workspace", str(temp_workspace), "workspace", "setup"]
-        )
+        runner.invoke(main, ["--workspace", str(temp_workspace), "workspace", "setup"])
 
         mock_setup.assert_called_once()
 
 
 @patch("multi_poetry_runner.core.workspace.WorkspaceManager.get_status")
-def test_workspace_status(mock_status, runner, temp_workspace):
+def test_workspace_status(mock_status, runner, temp_workspace) -> None:
     """Test workspace status command."""
     mock_status.return_value = {
         "workspace": {
@@ -99,15 +97,13 @@ def test_workspace_status(mock_status, runner, temp_workspace):
             ["--workspace", str(temp_workspace), "workspace", "init", "test-workspace"],
         )
 
-        result = runner.invoke(
-            main, ["--workspace", str(temp_workspace), "workspace", "status"]
-        )
+        runner.invoke(main, ["--workspace", str(temp_workspace), "workspace", "status"])
 
         mock_status.assert_called_once()
 
 
 @patch("multi_poetry_runner.core.dependencies.DependencyManager.switch_to_local")
-def test_deps_switch_local(mock_switch, runner, temp_workspace):
+def test_deps_switch_local(mock_switch, runner, temp_workspace) -> None:
     """Test dependency switch to local command."""
     mock_switch.return_value = True
 
@@ -126,7 +122,7 @@ def test_deps_switch_local(mock_switch, runner, temp_workspace):
 
 
 @patch("multi_poetry_runner.core.dependencies.DependencyManager.switch_to_remote")
-def test_deps_switch_remote(mock_switch, runner, temp_workspace):
+def test_deps_switch_remote(mock_switch, runner, temp_workspace) -> None:
     """Test dependency switch to remote command."""
     mock_switch.return_value = True
 
@@ -145,7 +141,7 @@ def test_deps_switch_remote(mock_switch, runner, temp_workspace):
 
 
 @patch("multi_poetry_runner.core.dependencies.DependencyManager.switch_to_test")
-def test_deps_switch_test(mock_switch, runner, temp_workspace):
+def test_deps_switch_test(mock_switch, runner, temp_workspace) -> None:
     """Test dependency switch to test command."""
     mock_switch.return_value = True
 
@@ -163,7 +159,7 @@ def test_deps_switch_test(mock_switch, runner, temp_workspace):
         mock_switch.assert_called_once_with(dry_run=False)
 
 
-def test_deps_switch_dry_run(runner, temp_workspace):
+def test_deps_switch_dry_run(runner, temp_workspace) -> None:
     """Test dependency switch with dry run."""
     with runner.isolated_filesystem():
         runner.invoke(
@@ -188,7 +184,7 @@ def test_deps_switch_dry_run(runner, temp_workspace):
 
 
 @patch("multi_poetry_runner.core.release.ReleaseCoordinator.create_release")
-def test_release_create(mock_release, runner, temp_workspace):
+def test_release_create(mock_release, runner, temp_workspace) -> None:
     """Test release creation command."""
     mock_release.return_value = True
 
@@ -208,7 +204,7 @@ def test_release_create(mock_release, runner, temp_workspace):
 
 
 @patch("multi_poetry_runner.core.testing.TestRunner.run_unit_tests")
-def test_test_unit(mock_test, runner, temp_workspace):
+def test_test_unit(mock_test, runner, temp_workspace) -> None:
     """Test unit test command."""
     mock_test.return_value = True
 
@@ -227,7 +223,7 @@ def test_test_unit(mock_test, runner, temp_workspace):
 
 
 @patch("multi_poetry_runner.core.testing.TestRunner.run_integration_tests")
-def test_test_integration(mock_test, runner, temp_workspace):
+def test_test_integration(mock_test, runner, temp_workspace) -> None:
     """Test integration test command."""
     mock_test.return_value = True
 
@@ -246,7 +242,7 @@ def test_test_integration(mock_test, runner, temp_workspace):
 
 
 @patch("multi_poetry_runner.core.hooks.GitHooksManager.install_hooks")
-def test_hooks_install(mock_install, runner, temp_workspace):
+def test_hooks_install(mock_install, runner, temp_workspace) -> None:
     """Test hooks installation command."""
     with runner.isolated_filesystem():
         runner.invoke(
@@ -262,7 +258,7 @@ def test_hooks_install(mock_install, runner, temp_workspace):
         mock_install.assert_called_once_with(force=False)
 
 
-def test_verbose_flag(runner, temp_workspace):
+def test_verbose_flag(runner, temp_workspace) -> None:
     """Test verbose flag."""
     with runner.isolated_filesystem():
         result = runner.invoke(
@@ -280,7 +276,7 @@ def test_verbose_flag(runner, temp_workspace):
         assert result.exit_code == 0
 
 
-def test_config_file_option(runner, temp_workspace):
+def test_config_file_option(runner, temp_workspace) -> None:
     """Test custom config file option."""
     config_file = temp_workspace / "custom-config.yaml"
     config_file.write_text(

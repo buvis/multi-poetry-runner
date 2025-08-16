@@ -10,7 +10,7 @@ from multi_poetry_runner.utils.config import ConfigManager
 
 
 @pytest.fixture
-def temp_workspace():
+def temp_workspace() -> Path:
     """Create a temporary workspace directory."""
     with tempfile.TemporaryDirectory() as tmpdir:
         workspace_path = Path(tmpdir)
@@ -18,20 +18,20 @@ def temp_workspace():
 
 
 @pytest.fixture
-def config_manager(temp_workspace):
+def config_manager(temp_workspace) -> ConfigManager:
     """Create a config manager for testing."""
 
     return ConfigManager(workspace_root=temp_workspace)
 
 
 @pytest.fixture
-def workspace_manager(config_manager):
+def workspace_manager(config_manager) -> WorkspaceManager:
     """Create a workspace manager for testing."""
 
     return WorkspaceManager(config_manager)
 
 
-def test_initialize_workspace(workspace_manager, temp_workspace):
+def test_initialize_workspace(workspace_manager, temp_workspace) -> None:
     """Test workspace initialization."""
     workspace_manager.initialize_workspace("test-workspace", "3.11")
 
@@ -55,7 +55,7 @@ def test_initialize_workspace(workspace_manager, temp_workspace):
     assert gitignore.exists()
 
 
-def test_add_repository(workspace_manager):
+def test_add_repository(workspace_manager) -> None:
     """Test adding a repository."""
     workspace_manager.initialize_workspace("test-workspace")
 
@@ -69,7 +69,7 @@ def test_add_repository(workspace_manager):
     assert config.repositories[0].name == "test-repo"
 
 
-def test_add_repository_auto_name(workspace_manager):
+def test_add_repository_auto_name(workspace_manager) -> None:
     """Test adding a repository with auto-detected name."""
     workspace_manager.initialize_workspace("test-workspace")
 
@@ -82,7 +82,7 @@ def test_add_repository_auto_name(workspace_manager):
 
 
 @patch("subprocess.run")
-def test_clone_repository(mock_subprocess, workspace_manager, temp_workspace):
+def test_clone_repository(mock_subprocess, workspace_manager, temp_workspace) -> None:
     """Test repository cloning."""
     from multi_poetry_runner.utils.config import RepositoryConfig
 
@@ -108,7 +108,9 @@ def test_clone_repository(mock_subprocess, workspace_manager, temp_workspace):
 
 
 @patch("subprocess.run")
-def test_setup_poetry_environment(mock_subprocess, workspace_manager, temp_workspace):
+def test_setup_poetry_environment(
+    mock_subprocess, workspace_manager, temp_workspace
+) -> None:
     """Test Poetry environment setup."""
     from multi_poetry_runner.utils.config import RepositoryConfig
 
@@ -137,7 +139,9 @@ def test_setup_poetry_environment(mock_subprocess, workspace_manager, temp_works
 
 
 @patch("subprocess.run")
-def test_get_status_with_git_info(mock_subprocess, workspace_manager, temp_workspace):
+def test_get_status_with_git_info(
+    mock_subprocess, workspace_manager, temp_workspace
+) -> None:
     """Test getting workspace status with Git branch information."""
     from multi_poetry_runner.utils.config import RepositoryConfig
 
@@ -208,7 +212,7 @@ python = "^3.11"
 @patch("subprocess.run")
 def test_get_package_version_formats(
     mock_subprocess, workspace_manager, temp_workspace
-):
+) -> None:
     """Test getting package version from different pyproject.toml formats."""
     from multi_poetry_runner.utils.config import RepositoryConfig
 
@@ -277,7 +281,7 @@ dynamic = ["version"]
     assert workspace_manager._get_package_version(repo_dynamic) == "dynamic"
 
 
-def test_get_status(workspace_manager, temp_workspace):
+def test_get_status(workspace_manager, temp_workspace) -> None:
     """Test getting workspace status."""
     workspace_manager.initialize_workspace("test-workspace")
 
@@ -288,7 +292,7 @@ def test_get_status(workspace_manager, temp_workspace):
     assert "repositories" in status
 
 
-def test_check_dependency_mode(workspace_manager, temp_workspace):
+def test_check_dependency_mode(workspace_manager, temp_workspace) -> None:
     """Test dependency mode checking."""
     from multi_poetry_runner.utils.config import RepositoryConfig
 
@@ -319,7 +323,7 @@ path = "../other-package"
     assert mode == "local"
 
 
-def test_check_dependency_modes_all_types(workspace_manager, temp_workspace):
+def test_check_dependency_modes_all_types(workspace_manager, temp_workspace) -> None:
     """Test dependency mode checking for all types: local, remote, test, mixed."""
     from multi_poetry_runner.utils.config import RepositoryConfig
 
@@ -435,7 +439,7 @@ python = "^3.11"
     assert workspace_manager._check_dependency_mode(repo_none) == "none"
 
 
-def test_clean_workspace(workspace_manager, temp_workspace):
+def test_clean_workspace(workspace_manager, temp_workspace) -> None:
     """Test workspace cleanup."""
     workspace_manager.initialize_workspace("test-workspace")
 

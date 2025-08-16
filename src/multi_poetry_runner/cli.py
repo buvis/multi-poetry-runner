@@ -11,6 +11,7 @@ import click
 import toml
 from rich.console import Console
 
+from . import __version__
 from .core.dependencies import DependencyManager
 from .core.hooks import GitHooksManager
 from .core.release import ReleaseCoordinator
@@ -22,9 +23,6 @@ from .utils.logger import setup_logging
 
 # Global console for rich output
 console = Console()
-
-# Version info
-from . import __version__
 
 
 @click.group()

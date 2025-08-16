@@ -985,12 +985,12 @@ class DependencyManager:
         dependency_chains = {}
 
         # Build dependency chains
-        for package_name, package_info in all_packages.items():
+        for package_name, _package_info in all_packages.items():
             chains = self._build_dependency_chains(package_name, all_packages, set())
             dependency_chains[package_name] = chains
 
         # Check for version conflicts in chains
-        for package_name, chains in dependency_chains.items():
+        for _package_name, chains in dependency_chains.items():
             for chain in chains:
                 if len(chain) > 2:  # Only check transitive dependencies (length > 2)
                     for i in range(len(chain) - 1):
@@ -1062,7 +1062,7 @@ class DependencyManager:
             )
 
             for sub_chain in sub_chains:
-                chains.append([package_name] + sub_chain)
+                chains.append([package_name, *sub_chain])
 
         return chains
 

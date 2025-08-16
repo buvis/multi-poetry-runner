@@ -313,7 +313,7 @@ class VersionManager:
             )
 
         except subprocess.CalledProcessError as e:
-            raise Exception(f"Failed to update version for {repo.name}: {e}")
+            raise Exception(f"Failed to update version for {repo.name}: {e}") from e
 
     def _get_dependent_repositories(self, repository: str) -> list[RepositoryConfig]:
         """Get all repositories that depend on the given repository."""
@@ -525,14 +525,14 @@ class VersionManager:
             # Get status for all repositories
             repos_to_check = config.repositories
 
-        status = {
+        status: dict[str, Any] = {
             "repositories": [],
             "dependency_graph": {},
             "version_history": self._get_recent_version_history(),
         }
 
         for repo in repos_to_check:
-            repo_status = {
+            repo_status: dict[str, Any] = {
                 "name": repo.name,
                 "package_name": repo.package_name,
                 "current_version": None,
@@ -761,7 +761,7 @@ class VersionManager:
                 alpha = entry.get("alpha", False)
 
                 change_str = (
-                    f"{old_ver} → {new_ver} ({bump_type}{'α' if alpha else ''})"
+                    f"{old_ver} → {new_ver} ({bump_type}{'alpha' if alpha else ''})"
                 )
 
                 dependents = entry.get("dependents_updated", [])

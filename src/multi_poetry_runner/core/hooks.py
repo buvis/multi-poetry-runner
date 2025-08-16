@@ -410,7 +410,7 @@ exit 0
         """Get status of Git hooks across repositories."""
         config = self.config_manager.load_config()
 
-        status = {"workspace": config.name, "repositories": []}
+        status: dict[str, Any] = {"workspace": config.name, "repositories": []}
 
         for repo in config.repositories:
             repo_status = {

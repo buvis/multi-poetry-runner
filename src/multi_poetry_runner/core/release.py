@@ -43,8 +43,8 @@ class ReleaseCoordinator:
     def __init__(self, config_manager: ConfigManager):
         self.config_manager = config_manager
         self.workspace_root = config_manager.workspace_root
-        self.backups = {}
-        self.release_results = {}
+        self.backups: dict[str, Any] = {}
+        self.release_results: dict[str, ReleaseStatus] = {}
 
     def create_release(
         self,
@@ -75,7 +75,7 @@ class ReleaseCoordinator:
 
         # Determine which repositories to release
         if repositories:
-            repos_to_release = []
+            repos_to_release: list[RepositoryConfig] = []
             for repo_name in repositories:
                 repo = self.config_manager.get_repository(repo_name)
                 if repo:
@@ -624,10 +624,8 @@ class ReleaseCoordinator:
         self, released_repos: list[RepositoryConfig]
     ) -> bool:
         """Update dependent repositories to use the new released versions with cascading updates."""
-        config = self.config_manager.load_config()
-
         # Create a map of released repository versions
-        released_versions = {}
+        released_versions: dict[str, str] = {}
         for repo in released_repos:
             new_version = self._get_current_version(repo)
             if new_version:
@@ -658,7 +656,7 @@ class ReleaseCoordinator:
         ]
 
         # Track which repositories have been updated in this release cycle
-        updated_in_this_cycle = {
+        updated_in_this_cycle: dict[str, str | None] = {
             repo.name: self._get_current_version(repo) for repo in released_repos
         }
         success_count = 0
@@ -685,7 +683,7 @@ class ReleaseCoordinator:
 
                     updated_repo = self.config_manager.get_repository(updated_repo_name)
                     if updated_repo and self._update_dependency_version(
-                        dep_repo, updated_repo.package_name, updated_version
+                        dep_repo, updated_repo.package_name, updated_version or ""
                     ):
                         dependencies_updated = True
 
@@ -719,12 +717,14 @@ class ReleaseCoordinator:
 
                     if result.stdout.strip():
                         # Build commit message with all updated dependencies
-                        updated_deps = []
+                        updated_deps: list[str] = []
                         for released_repo in released_repos:
                             if released_repo.name in updated_in_this_cycle:
-                                updated_deps.append(
-                                    f"{released_repo.package_name}@{updated_in_this_cycle[released_repo.name]}"
-                                )
+                                version_str = updated_in_this_cycle[released_repo.name]
+                                if version_str:
+                                    updated_deps.append(
+                                        f"{released_repo.package_name}@{version_str}"
+                                    )
 
                         # Add other cascading updates
                         for (
@@ -743,12 +743,13 @@ class ReleaseCoordinator:
                                     updated_repo
                                     and updated_repo_name in dep_repo.dependencies
                                 ):
-                                    updated_deps.append(
-                                        f"{updated_repo.package_name}@{updated_version}"
-                                    )
+                                    if updated_version:
+                                        updated_deps.append(
+                                            f"{updated_repo.package_name}@{updated_version}"
+                                        )
 
                         # Remove duplicates while preserving order
-                        unique_deps = []
+                        unique_deps: list[str] = []
                         seen = set()
                         for dep in updated_deps:
                             if dep not in seen:
@@ -801,7 +802,7 @@ class ReleaseCoordinator:
         """Find all repositories that depend on the released repos, including cascading dependencies."""
         config = self.config_manager.load_config()
         released_repo_names = {repo.name for repo in released_repos}
-        all_dependents = []  # Use list instead of set to avoid unhashable type error
+        all_dependents: list[RepositoryConfig] = []
         dependent_names = set()  # Track names to avoid duplicates
 
         # Use a queue to process dependencies level by level

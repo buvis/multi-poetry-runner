@@ -7,7 +7,7 @@ from rich.console import Console
 from rich.logging import RichHandler
 
 
-def setup_logging(level: int = logging.INFO, log_file: Path = None) -> None:
+def setup_logging(level: int = logging.INFO, log_file: Path | None = None) -> None:
     """Set up logging configuration with Rich handler."""
 
     # Create logs directory if needed
