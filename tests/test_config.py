@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+
 from multi_poetry_runner.utils.config import (
     ConfigManager,
     RepositoryConfig,
