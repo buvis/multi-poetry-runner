@@ -284,13 +284,15 @@ def test_verbose_flag(runner, temp_workspace):
 def test_config_file_option(runner, temp_workspace):
     """Test custom config file option."""
     config_file = temp_workspace / "custom-config.yaml"
-    config_file.write_text("""
+    config_file.write_text(
+        """
 version: "1.0"
 workspace:
   name: "custom-workspace"
   python_version: "3.11"
 repositories: []
-""")
+"""
+    )
 
     with runner.isolated_filesystem():
         result = runner.invoke(

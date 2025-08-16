@@ -570,14 +570,14 @@ async def test_async_operations():
             status_text = "✓ Passed" if result["success"] else "✗ Failed"
             coverage_text = "✓" if result.get("coverage") else ""
 
-            row = f'''
+            row = f"""
             <tr>
                 <td>{repo_name}</td>
                 <td>{result["type"]}</td>
                 <td class="{status_class}">{status_text}</td>
                 <td>{coverage_text}</td>
             </tr>
-            '''
+            """
             rows.append(row)
 
         return html_template.format(

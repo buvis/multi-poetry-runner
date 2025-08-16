@@ -17,85 +17,91 @@ console = Console()
 
 class GitHooksManager:
     """Manages Git hooks across repositories."""
-    
+
     def __init__(self, config_manager: ConfigManager):
         self.config_manager = config_manager
         self.workspace_root = config_manager.workspace_root
-        
+
     def install_hooks(self, force: bool = False) -> None:
         """Install Git hooks in all repositories."""
         config = self.config_manager.load_config()
-        
+
         console.print("\n[bold]Installing Git hooks...[/bold]")
-        
+
         # Create hooks directory in workspace
         hooks_dir = self.workspace_root / "hooks"
         hooks_dir.mkdir(exist_ok=True)
-        
+
         # Generate hook templates
         self._create_hook_templates(hooks_dir)
-        
+
         # Install hooks in each repository
         for repo in config.repositories:
             if repo.path.exists():
                 self._install_repo_hooks(repo, hooks_dir, force)
-        
+
         console.print("[green]✓ Git hooks installed successfully[/green]")
-    
+
     def _create_hook_templates(self, hooks_dir: Path) -> None:
         """Create Git hook templates."""
-        
+
         # Pre-commit hook template
         pre_commit_hook = self._get_pre_commit_hook_template()
         (hooks_dir / "pre-commit").write_text(pre_commit_hook)
         (hooks_dir / "pre-commit").chmod(0o755)
-        
+
         # Pre-push hook template (optional)
         pre_push_hook = self._get_pre_push_hook_template()
         (hooks_dir / "pre-push").write_text(pre_push_hook)
         (hooks_dir / "pre-push").chmod(0o755)
-        
+
         logger.info(f"Created hook templates in {hooks_dir}")
-    
-    def _install_repo_hooks(self, repo: RepositoryConfig, hooks_dir: Path, 
-                           force: bool = False) -> None:
+
+    def _install_repo_hooks(
+        self, repo: RepositoryConfig, hooks_dir: Path, force: bool = False
+    ) -> None:
         """Install hooks in a single repository."""
-        
+
         git_hooks_dir = repo.path / ".git" / "hooks"
         if not git_hooks_dir.exists():
             logger.warning(f"No .git/hooks directory in {repo.name}")
             return
-        
+
         # Install pre-commit hook
         self._install_single_hook(repo, hooks_dir, "pre-commit", force)
-        
+
         # Install pre-push hook if it exists
         if (hooks_dir / "pre-push").exists():
             self._install_single_hook(repo, hooks_dir, "pre-push", force)
-        
+
         logger.info(f"Installed hooks in {repo.name}")
-    
-    def _install_single_hook(self, repo: RepositoryConfig, hooks_dir: Path,
-                           hook_name: str, force: bool = False) -> None:
+
+    def _install_single_hook(
+        self,
+        repo: RepositoryConfig,
+        hooks_dir: Path,
+        hook_name: str,
+        force: bool = False,
+    ) -> None:
         """Install a single hook in a repository."""
-        
+
         source_hook = hooks_dir / hook_name
         target_hook = repo.path / ".git" / "hooks" / hook_name
-        
+
         # Backup existing hook
         if target_hook.exists() and not force:
             backup_path = target_hook.with_suffix(".backup")
             if not backup_path.exists():
                 shutil.copy2(target_hook, backup_path)
                 logger.info(f"Backed up existing {hook_name} hook in {repo.name}")
-        
+
         # Copy new hook
         shutil.copy2(source_hook, target_hook)
         target_hook.chmod(0o755)
-    
+
     def _get_pre_commit_hook_template(self) -> str:
         """Get pre-commit hook template."""
-        return '''#!/bin/bash
+        return """#!/bin/bash
 # Pre-commit hook for MPR managed repositories
 # This hook prevents committing local path dependencies
 
@@ -183,11 +189,11 @@ fi
 
 print_info "✓ pyproject.toml validation passed"
 exit 0
-'''
-    
+"""
+
     def _get_pre_push_hook_template(self) -> str:
         """Get pre-push hook template."""
-        return '''#!/bin/bash
+        return """#!/bin/bash
 # Pre-push hook for MPR managed repositories
 # Additional validation before pushing
 
@@ -212,87 +218,85 @@ fi
 
 # Additional checks can be added here
 exit 0
-'''
-    
+"""
+
     def uninstall_hooks(self) -> None:
         """Uninstall Git hooks from all repositories."""
         config = self.config_manager.load_config()
-        
+
         console.print("\n[bold]Uninstalling Git hooks...[/bold]")
-        
+
         for repo in config.repositories:
             if repo.path.exists():
                 self._uninstall_repo_hooks(repo)
-        
+
         console.print("[green]✓ Git hooks uninstalled[/green]")
-    
+
     def _uninstall_repo_hooks(self, repo: RepositoryConfig) -> None:
         """Uninstall hooks from a single repository."""
-        
+
         git_hooks_dir = repo.path / ".git" / "hooks"
         if not git_hooks_dir.exists():
             return
-        
+
         # Remove MPR hooks
         hooks_to_remove = ["pre-commit", "pre-push"]
-        
+
         for hook_name in hooks_to_remove:
             hook_path = git_hooks_dir / hook_name
             backup_path = hook_path.with_suffix(".backup")
-            
+
             # Remove MPR hook
             if hook_path.exists():
                 hook_path.unlink()
-            
+
             # Restore backup if it exists
             if backup_path.exists():
                 shutil.move(backup_path, hook_path)
                 logger.info(f"Restored backup {hook_name} hook in {repo.name}")
-        
+
         logger.info(f"Uninstalled hooks from {repo.name}")
-    
+
     def test_hooks(self, verbose: bool = False) -> bool:
         """Test Git hooks functionality."""
         config = self.config_manager.load_config()
-        
+
         console.print("\n[bold]Testing Git hooks...[/bold]")
-        
+
         all_passed = True
         test_results = {}
-        
+
         for repo in config.repositories:
             if repo.path.exists():
                 result = self._test_repo_hooks(repo, verbose)
                 test_results[repo.name] = result
                 if not result["success"]:
                     all_passed = False
-        
+
         # Display results
         self._display_hook_test_results(test_results)
-        
+
         return all_passed
-    
-    def _test_repo_hooks(self, repo: RepositoryConfig, verbose: bool = False) -> Dict[str, Any]:
+
+    def _test_repo_hooks(
+        self, repo: RepositoryConfig, verbose: bool = False
+    ) -> Dict[str, Any]:
         """Test hooks in a single repository."""
-        
-        result = {
-            "success": True,
-            "tests": [],
-            "errors": []
-        }
-        
+
+        result = {"success": True, "tests": [], "errors": []}
+
         git_hooks_dir = repo.path / ".git" / "hooks"
         if not git_hooks_dir.exists():
             result["success"] = False
             result["errors"].append("No .git/hooks directory")
             return result
-        
+
         # Test pre-commit hook exists and is executable
         pre_commit_hook = git_hooks_dir / "pre-commit"
         if pre_commit_hook.exists():
             if pre_commit_hook.stat().st_mode & 0o111:  # Check if executable
                 result["tests"].append("pre-commit hook exists and is executable")
-                
+
                 # Test hook functionality with a dummy test
                 test_success = self._test_pre_commit_hook(repo, verbose)
                 if test_success:
@@ -306,51 +310,53 @@ exit 0
         else:
             result["success"] = False
             result["errors"].append("pre-commit hook not found")
-        
+
         return result
-    
-    def _test_pre_commit_hook(self, repo: RepositoryConfig, verbose: bool = False) -> bool:
+
+    def _test_pre_commit_hook(
+        self, repo: RepositoryConfig, verbose: bool = False
+    ) -> bool:
         """Test pre-commit hook functionality."""
-        
+
         # Create a test scenario - temporarily add a path dependency
         pyproject_path = repo.path / "pyproject.toml"
         if not pyproject_path.exists():
             return True  # No pyproject.toml to test
-        
+
         # Read original content
         original_content = pyproject_path.read_text()
-        
+
         try:
             # Add a dummy path dependency
-            test_content = original_content + '\\n[tool.poetry.dependencies.test-package]\\npath = "../test"\\n'
+            test_content = (
+                original_content
+                + '\\n[tool.poetry.dependencies.test-package]\\npath = "../test"\\n'
+            )
             pyproject_path.write_text(test_content)
-            
+
             # Stage the file
             subprocess.run(
                 ["git", "add", "pyproject.toml"],
                 cwd=repo.path,
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
-            
+
             # Try to run pre-commit hook
             hook_path = repo.path / ".git" / "hooks" / "pre-commit"
             result = subprocess.run(
-                [str(hook_path)],
-                cwd=repo.path,
-                capture_output=True,
-                text=True
+                [str(hook_path)], cwd=repo.path, capture_output=True, text=True
             )
-            
+
             # Hook should fail (return non-zero) because of path dependency
             success = result.returncode != 0
-            
+
             if verbose and not success:
                 logger.warning(f"Pre-commit hook test output: {result.stdout}")
                 logger.warning(f"Pre-commit hook test error: {result.stderr}")
-            
+
             return success
-            
+
         except Exception as e:
             if verbose:
                 logger.error(f"Error testing pre-commit hook: {e}")
@@ -358,63 +364,62 @@ exit 0
         finally:
             # Restore original content
             pyproject_path.write_text(original_content)
-            
+
             # Unstage the file
             subprocess.run(
                 ["git", "reset", "HEAD", "pyproject.toml"],
                 cwd=repo.path,
-                capture_output=True
+                capture_output=True,
             )
-    
-    def _display_hook_test_results(self, test_results: Dict[str, Dict[str, Any]]) -> None:
+
+    def _display_hook_test_results(
+        self, test_results: Dict[str, Dict[str, Any]]
+    ) -> None:
         """Display hook test results."""
-        
+
         table = Table(title="Git Hook Test Results")
         table.add_column("Repository", style="cyan")
         table.add_column("Status", style="green")
         table.add_column("Tests Passed", style="blue")
         table.add_column("Errors", style="red")
-        
+
         for repo_name, result in test_results.items():
             status_icon = "✓" if result["success"] else "✗"
             status_color = "green" if result["success"] else "red"
-            
+
             tests_passed = len(result["tests"])
             errors_count = len(result["errors"])
-            
+
             table.add_row(
                 repo_name,
                 f"[{status_color}]{status_icon}[/{status_color}]",
                 str(tests_passed),
-                str(errors_count) if errors_count > 0 else ""
+                str(errors_count) if errors_count > 0 else "",
             )
-        
+
         console.print(table)
-        
+
         # Show detailed errors if any
         for repo_name, result in test_results.items():
             if result["errors"]:
                 console.print(f"\\n[red]Errors in {repo_name}:[/red]")
                 for error in result["errors"]:
                     console.print(f"  - {error}")
-    
+
     def get_hook_status(self) -> Dict[str, Any]:
         """Get status of Git hooks across repositories."""
         config = self.config_manager.load_config()
-        
-        status = {
-            "workspace": config.name,
-            "repositories": []
-        }
-        
+
+        status = {"workspace": config.name, "repositories": []}
+
         for repo in config.repositories:
             repo_status = {
                 "name": repo.name,
                 "path": str(repo.path),
                 "hooks_installed": False,
-                "hooks": {}
+                "hooks": {},
             }
-            
+
             if repo.path.exists():
                 git_hooks_dir = repo.path / ".git" / "hooks"
                 if git_hooks_dir.exists():
@@ -423,57 +428,61 @@ exit 0
                         hook_path = git_hooks_dir / hook_name
                         repo_status["hooks"][hook_name] = {
                             "exists": hook_path.exists(),
-                            "executable": hook_path.exists() and bool(hook_path.stat().st_mode & 0o111),
-                            "is_mpr_hook": self._is_mpr_hook(hook_path)
+                            "executable": hook_path.exists()
+                            and bool(hook_path.stat().st_mode & 0o111),
+                            "is_mpr_hook": self._is_mpr_hook(hook_path),
                         }
-                    
+
                     # Determine if hooks are installed
                     repo_status["hooks_installed"] = any(
                         hook_info["exists"] and hook_info["is_mpr_hook"]
                         for hook_info in repo_status["hooks"].values()
                     )
-            
+
             status["repositories"].append(repo_status)
-        
+
         return status
-    
+
     def _is_mpr_hook(self, hook_path: Path) -> bool:
         """Check if a hook is a MPR-managed hook."""
         if not hook_path.exists():
             return False
-        
+
         try:
             content = hook_path.read_text()
             return "MPR managed repositories" in content or "SKIP_MPR_HOOKS" in content
         except Exception:
             return False
-    
+
     def display_hook_status(self, status: Dict[str, Any]) -> None:
         """Display Git hook status."""
-        
-        console.print(f"\\n[bold]Git Hook Status for workspace: {status['workspace']}[/bold]")
-        
+
+        console.print(
+            f"\\n[bold]Git Hook Status for workspace: {status['workspace']}[/bold]"
+        )
+
         table = Table(title="Repository Hook Status")
         table.add_column("Repository", style="cyan")
         table.add_column("Hooks Installed", style="green")
         table.add_column("Pre-commit", style="yellow")
         table.add_column("Pre-push", style="blue")
-        
+
         for repo in status["repositories"]:
             hooks_installed = "✓" if repo["hooks_installed"] else "✗"
-            
-            pre_commit_status = self._format_hook_status(repo["hooks"].get("pre-commit", {}))
-            pre_push_status = self._format_hook_status(repo["hooks"].get("pre-push", {}))
-            
-            table.add_row(
-                repo["name"],
-                hooks_installed,
-                pre_commit_status,
-                pre_push_status
+
+            pre_commit_status = self._format_hook_status(
+                repo["hooks"].get("pre-commit", {})
             )
-        
+            pre_push_status = self._format_hook_status(
+                repo["hooks"].get("pre-push", {})
+            )
+
+            table.add_row(
+                repo["name"], hooks_installed, pre_commit_status, pre_push_status
+            )
+
         console.print(table)
-    
+
     def _format_hook_status(self, hook_info: Dict[str, bool]) -> str:
         """Format hook status for display."""
         if not hook_info.get("exists", False):
