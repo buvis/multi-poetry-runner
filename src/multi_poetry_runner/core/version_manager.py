@@ -231,7 +231,8 @@ class VersionManager:
             with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
 
-            return pyproject_data.get("tool", {}).get("poetry", {}).get("version")
+            version = pyproject_data.get("tool", {}).get("poetry", {}).get("version")
+            return str(version) if version is not None else None
         except (toml.TomlDecodeError, KeyError):
             return None
 
@@ -505,7 +506,7 @@ class VersionManager:
         for dependent_info in dependents_updated:
             dependent_name = dependent_info["name"]
             dependent_repo = self.config_manager.get_repository(dependent_name)
-            if dependent_repo and dependent_repo.path.exists():
+            if dependent_repo is not None and dependent_repo.path.exists():
                 if not _test_repository(dependent_repo, dependent_name):
                     return False
 
@@ -583,7 +584,9 @@ class VersionManager:
                     continue
 
                 # Check if this is one of our managed dependencies
-                dep_repo = self.config_manager.get_repository(dep_name)
+                dep_repo: RepositoryConfig | None = self.config_manager.get_repository(
+                    dep_name
+                )
                 if dep_repo:
                     info = {
                         "name": dep_name,
@@ -651,7 +654,7 @@ class VersionManager:
 
         try:
             with open(self.version_history_file) as f:
-                history = json.load(f)
+                history: list[dict[str, Any]] = json.load(f)
 
             # Return most recent entries
             return history[-limit:] if history else []
@@ -803,11 +806,11 @@ class VersionManager:
         dependency_order = self.config_manager.get_dependency_order()
 
         for repo_name in dependency_order:
-            repo = self.config_manager.get_repository(repo_name)
-            if not repo or not repo.path.exists():
+            repository = self.config_manager.get_repository(repo_name)
+            if repository is None or not repository.path.exists():
                 continue
 
-            dependencies = self._get_dependency_info(repo)
+            dependencies = self._get_dependency_info(repository)
 
             for dep in dependencies:
                 if not dep.get("managed") or dep.get("is_path"):
@@ -823,7 +826,7 @@ class VersionManager:
                     if clean_required != current_version:
                         updates_needed.append(
                             {
-                                "repo": repo,
+                                "repo": repository,
                                 "dependency": dep["name"],
                                 "current_required": required_version,
                                 "new_required": f"^{current_version}",

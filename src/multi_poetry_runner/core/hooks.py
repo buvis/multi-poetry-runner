@@ -264,7 +264,7 @@ exit 0
         console.print("\n[bold]Testing Git hooks...[/bold]")
 
         all_passed = True
-        test_results = {}
+        test_results: dict[str, dict[str, Any]] = {}
 
         for repo in config.repositories:
             if repo.path.exists():
@@ -283,7 +283,7 @@ exit 0
     ) -> dict[str, Any]:
         """Test hooks in a single repository."""
 
-        result = {"success": True, "tests": [], "errors": []}
+        result: dict[str, Any] = {"success": True, "tests": [], "errors": []}
 
         git_hooks_dir = repo.path / ".git" / "hooks"
         if not git_hooks_dir.exists():
@@ -413,7 +413,7 @@ exit 0
         status: dict[str, Any] = {"workspace": config.name, "repositories": []}
 
         for repo in config.repositories:
-            repo_status = {
+            repo_status: dict[str, Any] = {
                 "name": repo.name,
                 "path": str(repo.path),
                 "hooks_installed": False,

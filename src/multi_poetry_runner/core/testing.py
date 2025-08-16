@@ -24,7 +24,7 @@ class TestRunner:
     def __init__(self, config_manager: ConfigManager):
         self.config_manager = config_manager
         self.workspace_root = config_manager.workspace_root
-        self.test_results = {}
+        self.test_results: dict[str, dict[str, Any]] = {}
 
     def run_unit_tests(self, parallel: bool = False, coverage: bool = False) -> bool:
         """Run unit tests in all repositories."""
@@ -297,7 +297,7 @@ class TestRunner:
         """Create default integration test configuration."""
         config = self.config_manager.load_config()
 
-        integration_config = {
+        integration_config: dict[str, Any] = {
             "name": f"{config.name}-integration",
             "description": "Integration tests for the complete package stack",
             "environment": "local",

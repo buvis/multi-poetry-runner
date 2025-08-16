@@ -194,19 +194,20 @@ class ReleaseCoordinator:
 
         for repo in config.repositories:
             if repo.path.exists():
-                repo_backup = {
+                repo_backup_dir = backup_dir / repo.name
+                repo_backup: dict[str, Any] = {
                     "pyproject_toml": None,
                     "git_commit": None,
-                    "backup_dir": backup_dir / repo.name,
+                    "backup_dir": repo_backup_dir,
                 }
 
                 # Create repo backup directory
-                repo_backup["backup_dir"].mkdir(exist_ok=True)
+                repo_backup_dir.mkdir(exist_ok=True)
 
                 # Backup pyproject.toml
                 pyproject_path = repo.path / "pyproject.toml"
                 if pyproject_path.exists():
-                    backup_path = repo_backup["backup_dir"] / "pyproject.toml"
+                    backup_path = repo_backup_dir / "pyproject.toml"
                     shutil.copy2(pyproject_path, backup_path)
                     repo_backup["pyproject_toml"] = backup_path
 
@@ -481,7 +482,8 @@ class ReleaseCoordinator:
             with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
 
-            return pyproject_data.get("tool", {}).get("poetry", {}).get("version")
+            version = pyproject_data.get("tool", {}).get("poetry", {}).get("version")
+            return str(version) if version is not None else None
         except (toml.TomlDecodeError, KeyError):
             return None
 
@@ -1115,7 +1117,7 @@ class ReleaseCoordinator:
     def get_status(self, verbose: bool = False) -> dict[str, Any]:
         """Get release status."""
         config = self.config_manager.load_config()
-        status = {"workspace": config.name, "repositories": []}
+        status: dict[str, Any] = {"workspace": config.name, "repositories": []}
 
         for repo in config.repositories:
             repo_status = {

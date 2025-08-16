@@ -36,6 +36,15 @@ repos:
     hooks:
       - id: pylint
         args: [--errors-only]
+        additional_dependencies:
+          - click
+          - pyyaml
+          - toml
+          - jinja2
+          - rich
+          - gitpython
+          - docker
+          - pytest
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.11.1

@@ -482,7 +482,8 @@ class DependencyManager:
             with open(pyproject_path) as f:
                 pyproject_data = toml.load(f)
 
-            return pyproject_data.get("tool", {}).get("poetry", {}).get("version")
+            version = pyproject_data.get("tool", {}).get("poetry", {}).get("version")
+            return str(version) if version is not None else None
         except (toml.TomlDecodeError, KeyError):
             return None
 
@@ -563,10 +564,13 @@ class DependencyManager:
     def get_status(self) -> dict[str, Any]:
         """Get dependency status for all repositories."""
         config = self.config_manager.load_config()
-        status = {"workspace_mode": self._get_workspace_mode(), "repositories": []}
+        status: dict[str, Any] = {
+            "workspace_mode": self._get_workspace_mode(),
+            "repositories": [],
+        }
 
         for repo in config.repositories:
-            repo_status = {
+            repo_status: dict[str, Any] = {
                 "name": repo.name,
                 "version": None,
                 "path_dependencies": [],
@@ -618,11 +622,11 @@ class DependencyManager:
             pyproject_data.get("tool", {}).get("poetry", {}).get("dependencies", {})
         )
 
-        path_deps = []
-        version_deps = []
-        test_deps = []
-        dependency_details = {}
-        compatibility_issues = []
+        path_deps: list[str] = []
+        version_deps: list[str] = []
+        test_deps: list[str] = []
+        dependency_details: dict[str, Any] = {}
+        compatibility_issues: list[dict[str, str]] = []
 
         for dep_name, dep_spec in dependencies.items():
             if dep_name == "python":
@@ -730,9 +734,9 @@ class DependencyManager:
             pyproject_data.get("tool", {}).get("poetry", {}).get("dependencies", {})
         )
 
-        path_deps = []
-        version_deps = []
-        test_deps = []
+        path_deps: list[str] = []
+        version_deps: list[str] = []
+        test_deps: list[str] = []
 
         for dep_name, dep_spec in dependencies.items():
             if dep_name == "python":
@@ -934,7 +938,7 @@ class DependencyManager:
         config = self.config_manager.load_config()
 
         # Build all packages info
-        all_packages = {}
+        all_packages: dict[str, Any] = {}
 
         for repo in config.repositories:
             if not repo.path.exists():

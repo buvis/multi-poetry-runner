@@ -1,5 +1,6 @@
 """Workspace management functionality."""
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -221,7 +222,7 @@ status:
         subprocess.run(
             ["poetry", "install"],
             cwd=repo.path,
-            env={**subprocess.os.environ, **env},
+            env={**os.environ, **env},
             check=True,
             capture_output=True,
         )
@@ -242,7 +243,7 @@ status:
         # Get MPR version
         from .. import __version__
 
-        status = {
+        status: dict[str, Any] = {
             "workspace": {
                 "name": config.name,
                 "root": str(self.workspace_root),
@@ -330,9 +331,9 @@ status:
                 pyproject_data.get("tool", {}).get("poetry", {}).get("dependencies", {})
             )
 
-            path_deps = []
-            version_deps = []
-            test_deps = []
+            path_deps: list[str] = []
+            version_deps: list[str] = []
+            test_deps: list[str] = []
 
             for dep_name, dep_spec in dependencies.items():
                 # Skip python dependency
@@ -384,11 +385,13 @@ status:
             # Check tool.poetry.version first (Poetry format)
             if "tool" in pyproject_data and "poetry" in pyproject_data["tool"]:
                 if "version" in pyproject_data["tool"]["poetry"]:
-                    return pyproject_data["tool"]["poetry"]["version"]
+                    version = pyproject_data["tool"]["poetry"]["version"]
+                    return str(version) if version is not None else "unknown"
 
             # Check project.version (PEP 621 format)
             if "project" in pyproject_data and "version" in pyproject_data["project"]:
-                return pyproject_data["project"]["version"]
+                version = pyproject_data["project"]["version"]
+                return str(version) if version is not None else "unknown"
 
             # Check if version is defined dynamically
             if "project" in pyproject_data and "dynamic" in pyproject_data["project"]:
