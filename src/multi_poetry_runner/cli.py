@@ -731,4 +731,5 @@ def hooks_uninstall(ctx: click.Context, confirm: bool) -> None:
 
 
 if __name__ == "__main__":
+    # pylint: disable=no-value-for-parameter
     main()

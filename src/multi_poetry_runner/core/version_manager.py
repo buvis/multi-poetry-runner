@@ -260,13 +260,16 @@ class VersionManager:
                 new_alpha = current_alpha + 1
             else:
                 # Convert to alpha version with bump
+                new_alpha = 1
                 if bump_type == "patch":
                     new_major, new_minor, new_patch = major, minor, patch + 1
                 elif bump_type == "minor":
                     new_major, new_minor, new_patch = major, minor + 1, 0
                 elif bump_type == "major":
                     new_major, new_minor, new_patch = major + 1, 0, 0
-                new_alpha = 1
+                else:
+                    # Default case to prevent undefined variables
+                    new_major, new_minor, new_patch = major, minor, patch
 
             return f"{new_major}.{new_minor}.{new_patch}-alpha.{new_alpha}"
         else:
