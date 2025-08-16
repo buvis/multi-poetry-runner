@@ -1,1 +1,1 @@
-"""Utility functions for BUVIS Development Tools."""
+"""Utility functions for Multi-Poetry Runner."""

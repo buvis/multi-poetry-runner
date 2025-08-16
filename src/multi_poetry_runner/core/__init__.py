@@ -1,1 +1,1 @@
-"""Core functionality for BUVIS Development Tools."""
+"""Core functionality for Multi-Poetry Runner."""
