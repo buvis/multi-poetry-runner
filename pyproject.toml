@@ -34,7 +34,7 @@ pylint = "^3.3.8"
 [tool.poetry.group.test.dependencies]
 pytest = "^8.0.0"
 pytest-mock = "^3.14.0"
-pytest-cov = "^5.0.0"
+pytest-cov = "^6.0.0"
 
 [tool.poetry.scripts]
 mpr = "multi_poetry_runner.cli:main"
