@@ -25,6 +25,7 @@ poetry install
 
 # Development Installation
 poetry install --with dev,test
+pre-commit install  # Install git hooks
 ```
 
 ## Quick Start
@@ -37,6 +38,7 @@ mpr workspace init my-workspace --python-version 3.11
 ```
 
 Creates structure:
+
 ```
 my-workspace/
 ├── mpr-config.yaml       # Main configuration
@@ -75,11 +77,11 @@ mpr workspace status # Check everything is ready
 
 MPR supports three dependency modes for different development phases:
 
-| Stage | Command | Purpose | Dependencies |
-|-------|---------|---------|--------------|
-| **Local** | `mpr deps switch local` | Active development | Path-based (`../package`) |
-| **Test** | `mpr deps switch test` | Integration testing | Test-PyPI packages |
-| **Remote** | `mpr deps switch remote` | Production ready | PyPI packages |
+| Stage      | Command                  | Purpose             | Dependencies              |
+| ---------- | ------------------------ | ------------------- | ------------------------- |
+| **Local**  | `mpr deps switch local`  | Active development  | Path-based (`../package`) |
+| **Test**   | `mpr deps switch test`   | Integration testing | Test-PyPI packages        |
+| **Remote** | `mpr deps switch remote` | Production ready    | PyPI packages             |
 
 ### Complete Feature Development Workflow
 
@@ -159,26 +161,26 @@ git push origin --tags
 
 ### Essential Commands
 
-| Category | Command | Description |
-|----------|---------|-------------|
-| **Workspace** | `mpr workspace init <name>` | Initialize new workspace |
-| | `mpr workspace setup` | Set up repositories and environments |
-| | `mpr workspace status` | Show workspace status |
-| | `mpr workspace add-repo <url>` | Add repository to workspace |
-| **Dependencies** | `mpr deps switch <local\|test\|remote>` | Switch dependency mode |
-| | `mpr deps status` | Show dependency status |
-| | `mpr deps update` | Update dependency versions |
-| **Versions** | `mpr version bump <repo> <type>` | Bump version (patch/minor/major) |
-| | `mpr version bump <repo> <type> --alpha` | Create alpha version |
-| | `mpr version bump <repo> <type> --dependents-bump <type>` | Control dependent bumps |
-| | `mpr version status` | Show version status |
-| **Testing** | `mpr test unit` | Run unit tests |
-| | `mpr test integration` | Run integration tests |
-| | `mpr test all` | Run all tests |
-| **Releases** | `mpr release create --stage <dev\|rc\|prod>` | Create release |
-| | `mpr release status` | Show release status |
-| **Git Hooks** | `mpr hooks install` | Install git hooks |
-| | `mpr hooks test` | Test hooks functionality |
+| Category         | Command                                                   | Description                          |
+| ---------------- | --------------------------------------------------------- | ------------------------------------ |
+| **Workspace**    | `mpr workspace init <name>`                               | Initialize new workspace             |
+|                  | `mpr workspace setup`                                     | Set up repositories and environments |
+|                  | `mpr workspace status`                                    | Show workspace status                |
+|                  | `mpr workspace add-repo <url>`                            | Add repository to workspace          |
+| **Dependencies** | `mpr deps switch <local\|test\|remote>`                   | Switch dependency mode               |
+|                  | `mpr deps status`                                         | Show dependency status               |
+|                  | `mpr deps update`                                         | Update dependency versions           |
+| **Versions**     | `mpr version bump <repo> <type>`                          | Bump version (patch/minor/major)     |
+|                  | `mpr version bump <repo> <type> --alpha`                  | Create alpha version                 |
+|                  | `mpr version bump <repo> <type> --dependents-bump <type>` | Control dependent bumps              |
+|                  | `mpr version status`                                      | Show version status                  |
+| **Testing**      | `mpr test unit`                                           | Run unit tests                       |
+|                  | `mpr test integration`                                    | Run integration tests                |
+|                  | `mpr test all`                                            | Run all tests                        |
+| **Releases**     | `mpr release create --stage <dev\|rc\|prod>`              | Create release                       |
+|                  | `mpr release status`                                      | Show release status                  |
+| **Git Hooks**    | `mpr hooks install`                                       | Install git hooks                    |
+|                  | `mpr hooks test`                                          | Test hooks functionality             |
 
 ### Makefile Shortcuts
 
@@ -219,16 +221,16 @@ settings:
   auto_install_hooks: true
   use_test_pypi: true
   parallel_jobs: 4
-  
+
   poetry:
     virtualenvs_in_project: true
     virtualenvs_create: true
-  
+
   testing:
     unit_test_timeout: 300
     integration_test_timeout: 1800
     coverage_threshold: 80
-  
+
   releases:
     auto_tag: true
     auto_push_tags: false
@@ -397,12 +399,12 @@ jobs:
 
 ### Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| Permission denied | `chmod -R u+w repos/` |
-| Git hooks preventing commits | `mpr deps switch remote` before committing |
-| Tests failing | `mpr test unit --verbose` or test individual repos |
-| Release failures | `mpr release status --verbose` and check logs |
+| Issue                        | Solution                                           |
+| ---------------------------- | -------------------------------------------------- |
+| Permission denied            | `chmod -R u+w repos/`                              |
+| Git hooks preventing commits | `mpr deps switch remote` before committing         |
+| Tests failing                | `mpr test unit --verbose` or test individual repos |
+| Release failures             | `mpr release status --verbose` and check logs      |
 
 ### Getting Help
 
