@@ -1,7 +1,5 @@
 """Test configuration manager."""
 
-import tempfile
-from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -12,14 +10,6 @@ from multi_poetry_runner.utils.config import (
     RepositoryConfig,
     WorkspaceConfig,
 )
-
-
-@pytest.fixture
-def temp_workspace() -> Generator[Path, None, None]:
-    """Create a temporary workspace directory."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        workspace_path = Path(tmpdir)
-        yield workspace_path
 
 
 @pytest.fixture

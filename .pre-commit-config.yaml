@@ -45,6 +45,7 @@ repos:
           - gitpython
           - docker
           - pytest
+        entry: env PYTHONPATH=src pylint
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.17.1
@@ -52,3 +53,4 @@ repos:
       - id: mypy
         additional_dependencies: [types-pyyaml, types-toml]
         args: [--ignore-missing-imports]
+        entry: env PYTHONPATH=src mypy
