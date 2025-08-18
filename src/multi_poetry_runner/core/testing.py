@@ -18,8 +18,8 @@ logger = get_logger(__name__)
 console = Console()
 
 
-class TestRunner:
-    """Runs various types of tests across repositories."""
+class ExecutorService:
+    """Executes various types of tests across repositories."""
 
     def __init__(self, config_manager: ConfigManager):
         self.config_manager = config_manager

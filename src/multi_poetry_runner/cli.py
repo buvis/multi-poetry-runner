@@ -15,7 +15,7 @@ from . import __version__
 from .core.dependencies import DependencyManager
 from .core.hooks import GitHooksManager
 from .core.release import ReleaseCoordinator
-from .core.testing import TestRunner
+from .core.testing import ExecutorService
 from .core.version_manager import VersionManager
 from .core.workspace import WorkspaceManager
 from .utils.config import ConfigManager
@@ -597,7 +597,7 @@ def test(ctx: click.Context) -> None:
 def test_unit(ctx: click.Context, parallel: bool, coverage: bool) -> None:
     """Run unit tests in all repositories."""
     try:
-        runner = TestRunner(ctx.obj["config_manager"])
+        runner = ExecutorService(ctx.obj["config_manager"])
         success = runner.run_unit_tests(parallel=parallel, coverage=coverage)
 
         if success:
@@ -625,7 +625,7 @@ def test_integration(
 ) -> None:
     """Run integration tests."""
     try:
-        runner = TestRunner(ctx.obj["config_manager"])
+        runner = ExecutorService(ctx.obj["config_manager"])
         success = runner.run_integration_tests(
             parallel=parallel, environment=environment, junit_output=junit_output
         )
@@ -647,7 +647,7 @@ def test_integration(
 def test_all(ctx: click.Context, parallel: bool, coverage: bool) -> None:
     """Run all tests."""
     try:
-        runner = TestRunner(ctx.obj["config_manager"])
+        runner = ExecutorService(ctx.obj["config_manager"])
 
         # Run unit tests first
         unit_success = runner.run_unit_tests(parallel=parallel, coverage=coverage)

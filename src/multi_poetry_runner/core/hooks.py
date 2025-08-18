@@ -36,6 +36,7 @@ class GitHooksManager:
         self._create_hook_templates(hooks_dir)
 
         # Install hooks in each repository
+
         for repo in config.repositories:
             if repo.path.exists():
                 self._install_repo_hooks(repo, hooks_dir, force)
@@ -44,6 +45,9 @@ class GitHooksManager:
 
     def _create_hook_templates(self, hooks_dir: Path) -> None:
         """Create Git hook templates."""
+
+        # Ensure hooks directory exists
+        hooks_dir.mkdir(parents=True, exist_ok=True)
 
         # Pre-commit hook template
         pre_commit_hook = self._get_pre_commit_hook_template()
@@ -63,14 +67,17 @@ class GitHooksManager:
         """Install hooks in a single repository."""
 
         git_hooks_dir = repo.path / ".git" / "hooks"
+
         if not git_hooks_dir.exists():
             logger.warning(f"No .git/hooks directory in {repo.name}")
+
             return
 
         # Install pre-commit hook
         self._install_single_hook(repo, hooks_dir, "pre-commit", force)
 
         # Install pre-push hook if it exists
+
         if (hooks_dir / "pre-push").exists():
             self._install_single_hook(repo, hooks_dir, "pre-push", force)
 
@@ -89,8 +96,10 @@ class GitHooksManager:
         target_hook = repo.path / ".git" / "hooks" / hook_name
 
         # Backup existing hook
+
         if target_hook.exists() and not force:
             backup_path = target_hook.with_suffix(".backup")
+
             if not backup_path.exists():
                 shutil.copy2(target_hook, backup_path)
                 logger.info(f"Backed up existing {hook_name} hook in {repo.name}")
@@ -101,6 +110,7 @@ class GitHooksManager:
 
     def _get_pre_commit_hook_template(self) -> str:
         """Get pre-commit hook template."""
+
         return """#!/bin/bash
 # Pre-commit hook for MPR managed repositories
 # This hook prevents committing local path dependencies
@@ -137,6 +147,32 @@ if [ "${SKIP_MPR_HOOKS:-}" = "1" ]; then
     exit 0
 fi
 
+# Find workspace root by looking for .dependency-mode or going up to parent directories
+find_workspace_root() {
+    local current_dir="$WORKSPACE_ROOT"
+    while [ "$current_dir" != "/" ]; do
+        if [ -f "$current_dir/.dependency-mode" ]; then
+            echo "$current_dir"
+            return
+        fi
+        current_dir="$(dirname "$current_dir")"
+    done
+    echo "$WORKSPACE_ROOT"
+}
+
+ACTUAL_WORKSPACE_ROOT="$(find_workspace_root)"
+
+# Check for dependency mode marker first
+if [ -f "$ACTUAL_WORKSPACE_ROOT/.dependency-mode" ]; then
+    mode=$(head -n1 "$ACTUAL_WORKSPACE_ROOT/.dependency-mode")
+    if [ "$mode" = "local" ]; then
+        print_error "Repository is in local dependency mode"
+        echo ""
+        echo "Please run 'mpr deps switch remote' before committing"
+        exit 1
+    fi
+fi
+
 # Check if pyproject.toml is being committed
 if ! git diff --cached --name-only | grep -q "^${PYPROJECT_FILE}$"; then
     exit 0
@@ -162,7 +198,12 @@ fi
 
 # Check for editable installs
 if echo "$staged_content" | grep -q 'develop = true'; then
-    print_error "Editable installs (develop = true) detected in pyproject.toml"
+    print_error "Local path dependencies detected in pyproject.toml"
+    echo ""
+    echo "Found editable dependencies (develop = true):"
+    echo "$staged_content" | grep 'develop = true' | while IFS= read -r line; do
+        echo "  $line"
+    done
     echo ""
     echo "Please run 'mpr deps switch remote' before committing"
     exit 1
@@ -176,23 +217,13 @@ if echo "$staged_content" | grep -E '"/home/|"/Users/|"C:\\\\|"/opt/|"/var/'; th
     exit 1
 fi
 
-# Check for dependency mode marker
-if [ -f "$WORKSPACE_ROOT/.dependency-mode" ]; then
-    mode=$(head -n1 "$WORKSPACE_ROOT/.dependency-mode")
-    if [ "$mode" = "local" ]; then
-        print_error "Repository is in local dependency mode"
-        echo ""
-        echo "Please run 'mpr deps switch remote' before committing"
-        exit 1
-    fi
-fi
-
 print_info "✓ pyproject.toml validation passed"
 exit 0
 """
 
     def _get_pre_push_hook_template(self) -> str:
         """Get pre-push hook template."""
+
         return """#!/bin/bash
 # Pre-push hook for MPR managed repositories
 # Additional validation before pushing
@@ -236,6 +267,7 @@ exit 0
         """Uninstall hooks from a single repository."""
 
         git_hooks_dir = repo.path / ".git" / "hooks"
+
         if not git_hooks_dir.exists():
             return
 
@@ -247,10 +279,12 @@ exit 0
             backup_path = hook_path.with_suffix(".backup")
 
             # Remove MPR hook
+
             if hook_path.exists():
                 hook_path.unlink()
 
             # Restore backup if it exists
+
             if backup_path.exists():
                 shutil.move(backup_path, hook_path)
                 logger.info(f"Restored backup {hook_name} hook in {repo.name}")
@@ -270,6 +304,7 @@ exit 0
             if repo.path.exists():
                 result = self._test_repo_hooks(repo, verbose)
                 test_results[repo.name] = result
+
                 if not result["success"]:
                     all_passed = False
 
@@ -286,19 +321,23 @@ exit 0
         result: dict[str, Any] = {"success": True, "tests": [], "errors": []}
 
         git_hooks_dir = repo.path / ".git" / "hooks"
+
         if not git_hooks_dir.exists():
             result["success"] = False
             result["errors"].append("No .git/hooks directory")
+
             return result
 
         # Test pre-commit hook exists and is executable
         pre_commit_hook = git_hooks_dir / "pre-commit"
+
         if pre_commit_hook.exists():
             if pre_commit_hook.stat().st_mode & 0o111:  # Check if executable
                 result["tests"].append("pre-commit hook exists and is executable")
 
                 # Test hook functionality with a dummy test
                 test_success = self._test_pre_commit_hook(repo, verbose)
+
                 if test_success:
                     result["tests"].append("pre-commit hook validation works")
                 else:
@@ -320,6 +359,7 @@ exit 0
 
         # Create a test scenario - temporarily add a path dependency
         pyproject_path = repo.path / "pyproject.toml"
+
         if not pyproject_path.exists():
             return True  # No pyproject.toml to test
 
@@ -360,6 +400,7 @@ exit 0
         except Exception as e:
             if verbose:
                 logger.error(f"Error testing pre-commit hook: {e}")
+
             return False
         finally:
             # Restore original content
@@ -400,9 +441,11 @@ exit 0
         console.print(table)
 
         # Show detailed errors if any
+
         for repo_name, result in test_results.items():
             if result["errors"]:
                 console.print(f"\\n[red]Errors in {repo_name}:[/red]")
+
                 for error in result["errors"]:
                     console.print(f"  - {error}")
 
@@ -422,8 +465,10 @@ exit 0
 
             if repo.path.exists():
                 git_hooks_dir = repo.path / ".git" / "hooks"
+
                 if git_hooks_dir.exists():
                     # Check each hook
+
                     for hook_name in ["pre-commit", "pre-push"]:
                         hook_path = git_hooks_dir / hook_name
                         repo_status["hooks"][hook_name] = {
@@ -445,11 +490,13 @@ exit 0
 
     def _is_mpr_hook(self, hook_path: Path) -> bool:
         """Check if a hook is a MPR-managed hook."""
+
         if not hook_path.exists():
             return False
 
         try:
             content = hook_path.read_text()
+
             return "MPR managed repositories" in content or "SKIP_MPR_HOOKS" in content
         except Exception:
             return False
@@ -485,6 +532,7 @@ exit 0
 
     def _format_hook_status(self, hook_info: dict[str, bool]) -> str:
         """Format hook status for display."""
+
         if not hook_info.get("exists", False):
             return "Not found"
         elif not hook_info.get("executable", False):

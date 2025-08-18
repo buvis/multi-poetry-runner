@@ -220,7 +220,7 @@ def test_release_create(
         mock_release.assert_called_once()
 
 
-@patch("multi_poetry_runner.core.testing.TestRunner.run_unit_tests")
+@patch("multi_poetry_runner.core.testing.ExecutorService.run_unit_tests")
 def test_test_unit(
     mock_test: unittest.mock.MagicMock, runner: CliRunner, temp_workspace: Path
 ) -> None:
@@ -241,7 +241,7 @@ def test_test_unit(
         mock_test.assert_called_once_with(parallel=False, coverage=False)
 
 
-@patch("multi_poetry_runner.core.testing.TestRunner.run_integration_tests")
+@patch("multi_poetry_runner.core.testing.ExecutorService.run_integration_tests")
 def test_test_integration(
     mock_test: unittest.mock.MagicMock, runner: CliRunner, temp_workspace: Path
 ) -> None:
