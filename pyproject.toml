@@ -64,12 +64,12 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
-    "--verbose",
-    "--strict-markers",
-    "--tb=short",
-    "--cov=multi_poetry_runner",
-    "--cov-report=term-missing",
-    "-p no:warnings",
-    "-p no:django"
+  "--verbose",
+  "--strict-markers",
+  "--tb=short",
+  "--cov=multi_poetry_runner",
+  "--cov-report=term-missing",
+  "-p no:warnings",
+  "-p no:django",
 ]
 pythonpath = ["src"]

@@ -1,7 +1,10 @@
+"""Global test configuration and shared fixtures."""
+
 import subprocess
 import tempfile
 from collections.abc import Generator
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 import toml
@@ -34,8 +37,16 @@ def config_manager(temp_workspace: Path) -> ConfigManager:
 
 
 @pytest.fixture
-def mock_config_manager(temp_workspace: Path) -> ConfigManager:
-    """Create a mock ConfigManager with test repositories."""
+def mock_config_manager(temp_workspace: Path) -> Mock:
+    """Create a mock ConfigManager for unit tests."""
+    mock = Mock(spec=ConfigManager)
+    mock.workspace_root = temp_workspace
+    return mock
+
+
+@pytest.fixture
+def real_config_manager(temp_workspace: Path) -> ConfigManager:
+    """Create a real ConfigManager with test repositories for integration tests."""
     config_manager = ConfigManager(workspace_root=temp_workspace)
 
     # Create test repos directory
@@ -68,18 +79,30 @@ def mock_config_manager(temp_workspace: Path) -> ConfigManager:
             toml.dump(pyproject_content, f)
 
         # Create git repository
-        subprocess.run(["git", "init"], cwd=repo_path, check=True)
+        subprocess.run(["git", "init"], cwd=repo_path, check=True, capture_output=True)
         subprocess.run(
-            ["git", "config", "user.name", "Test User"], cwd=repo_path, check=True
+            ["git", "config", "user.name", "Test User"],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
         )
         subprocess.run(
             ["git", "config", "user.email", "test@example.com"],
             cwd=repo_path,
             check=True,
+            capture_output=True,
         )
-        subprocess.run(["git", "add", "pyproject.toml"], cwd=repo_path, check=True)
         subprocess.run(
-            ["git", "commit", "-m", "Initial commit"], cwd=repo_path, check=True
+            ["git", "add", "pyproject.toml"],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "Initial commit"],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
         )
 
         # Create tests directory structure for testing module tests
@@ -167,32 +190,33 @@ async def test_async_integration():
     return config_manager
 
 
+# Component fixtures using Mock approach (for unit tests)
 @pytest.fixture
-def dependency_manager(mock_config_manager: ConfigManager) -> DependencyManager:
+def dependency_manager(mock_config_manager: Mock) -> DependencyManager:
     """Create DependencyManager instance with mocked config."""
     return DependencyManager(mock_config_manager)
 
 
 @pytest.fixture
-def hooks_manager(mock_config_manager: ConfigManager) -> GitHooksManager:
+def hooks_manager(mock_config_manager: Mock) -> GitHooksManager:
     """Create GitHooksManager instance with mocked config."""
     return GitHooksManager(mock_config_manager)
 
 
 @pytest.fixture
-def release_coordinator(mock_config_manager: ConfigManager) -> ReleaseCoordinator:
+def release_coordinator(mock_config_manager: Mock) -> ReleaseCoordinator:
     """Create ReleaseCoordinator instance with mocked config."""
     return ReleaseCoordinator(mock_config_manager)
 
 
 @pytest.fixture
-def test_runner(mock_config_manager: ConfigManager) -> ExecutorService:
+def test_runner(mock_config_manager: Mock) -> ExecutorService:
     """Create ExecutorService instance with mocked config."""
     return ExecutorService(mock_config_manager)
 
 
 @pytest.fixture
-def version_manager(mock_config_manager: ConfigManager) -> VersionManager:
+def version_manager(mock_config_manager: Mock) -> VersionManager:
     """Create VersionManager instance with mocked config."""
     return VersionManager(mock_config_manager)
 
@@ -201,3 +225,16 @@ def version_manager(mock_config_manager: ConfigManager) -> VersionManager:
 def workspace_manager(config_manager: ConfigManager) -> WorkspaceManager:
     """Create a workspace manager for testing."""
     return WorkspaceManager(config_manager)
+
+
+# Component fixtures using real approach (for integration tests)
+@pytest.fixture
+def real_dependency_manager(real_config_manager: ConfigManager) -> DependencyManager:
+    """Create DependencyManager instance with real config for integration tests."""
+    return DependencyManager(real_config_manager)
+
+
+@pytest.fixture
+def real_version_manager(real_config_manager: ConfigManager) -> VersionManager:
+    """Create VersionManager instance with real config for integration tests."""
+    return VersionManager(real_config_manager)
