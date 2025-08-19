@@ -79,12 +79,14 @@ def test_dummy():
 """
         )
 
-    # Mock repositories in config manager
+    # Create a Mock for load_config and attach it
     config_mock = Mock()
     config_mock.repositories = [
         Mock(name=repo_name, path=repos_dir / repo_name) for repo_name in mock_repos
     ]
-    mock_config_manager.load_config.return_value = config_mock
+    mock_load_config = Mock()
+    mock_load_config.return_value = config_mock
+    mock_config_manager.load_config = mock_load_config
 
     # Patch subprocess to simulate successful tests
     with patch("subprocess.run", side_effect=mock_run_method):
@@ -152,49 +154,45 @@ def test_integration():
     )
 
     # Create a mock RepositoryConfig
-    mock_repo_config: RepositoryConfig = Mock(
-        name="repo-a", package_name="repo-a", path=repo_path
+    mock_repo_config = RepositoryConfig(
+        name="repo-a",
+        package_name="repo-a",
+        path=repo_path,
+        dependencies=[],
+        url="file://test_path",  # Required argument for RepositoryConfig
     )
 
     # Mock config manager to return the repository config
-    mock_config_manager.get_repository.return_value = mock_repo_config
+    mock_get_repository = Mock()
+    mock_get_repository.return_value = mock_repo_config
+    mock_config_manager.get_repository = mock_get_repository
 
     # Patch subprocess to simulate successful tests
-    with patch("subprocess.run", side_effect=mock_run_method):
-        # Create a temporary capture of print output
-        with patch("builtins.print"):
-            # Prepare a function to run tests for a specific repository
-            def run_tests(repo_name: str) -> dict[str, Any]:
-                # Capture the current get_repository method
-                original_get_repository = test_runner.config_manager.get_repository
+    with (
+        patch("subprocess.run", side_effect=mock_run_method),
+        patch("builtins.print"),
+        patch.object(test_runner, "config_manager", mock_config_manager),
+    ):
 
-                try:
-                    # Override the method temporarily
-                    test_runner.config_manager.get_repository = (
-                        lambda name: mock_repo_config
-                    )
+        def run_tests(repo_name: str) -> dict[str, Any]:
+            repo = test_runner.config_manager.get_repository(repo_name)
 
-                    repo = test_runner.config_manager.get_repository(repo_name)
-                    success_unit = test_runner._run_repository_tests(repo, "unit")
-                    success_integration = test_runner._run_repository_tests(
-                        repo, "integration"
-                    )
+            # Validate that repository is not None
+            assert repo is not None, f"Repository {repo_name} not found"
 
-                    return {
-                        "repository": repo_name,
-                        "unit_tests": {
-                            "status": "success" if success_unit else "failure"
-                        },
-                        "integration_tests": {
-                            "status": "success" if success_integration else "failure"
-                        },
-                    }
-                finally:
-                    # Restore the original method
-                    test_runner.config_manager.get_repository = original_get_repository
+            success_unit = test_runner._run_repository_tests(repo, "unit")
+            success_integration = test_runner._run_repository_tests(repo, "integration")
 
-            # Use the function
-            results = run_tests("repo-a")
+            return {
+                "repository": repo_name,
+                "unit_tests": {"status": "success" if success_unit else "failure"},
+                "integration_tests": {
+                    "status": "success" if success_integration else "failure"
+                },
+            }
+
+        # Use the function
+        results = run_tests("repo-a")
 
         # Validate test results
         assert isinstance(results, dict)
@@ -217,7 +215,7 @@ def test_test_results_summary(
 
     # Create mock repositories
     mock_repos: list[str] = ["repo-a", "repo-b", "repo-c"]
-    mock_repo_configs: list[Mock] = []
+    mock_repo_configs: list[RepositoryConfig] = []
     for repo_name in mock_repos:
         repo_path = repos_dir / repo_name
         repo_path.mkdir(exist_ok=True)
@@ -247,15 +245,23 @@ def test_dummy():
 """
         )
 
-        # Create mock repository config
-        mock_repo_config = Mock(name=repo_name, package_name=repo_name, path=repo_path)
+        # Create a proper RepositoryConfig
+        mock_repo_config = RepositoryConfig(
+            name=repo_name,
+            package_name=repo_name,
+            path=repo_path,
+            dependencies=[],
+            url="file://test_path",
+        )
         mock_repo_configs.append(mock_repo_config)
 
     # Prepare configuration mock
     config_mock = Mock()
     config_mock.repositories = mock_repo_configs
     config_mock.name = "test-workspace"
-    mock_config_manager.load_config.return_value = config_mock
+    mock_load_config = Mock()
+    mock_load_config.return_value = config_mock
+    mock_config_manager.load_config = mock_load_config
 
     # Reset test results to an empty dictionary
     test_runner.test_results = {}

@@ -31,6 +31,10 @@ def test_dependency_cycle_detection(
     with open(repo_c_pyproject, "w") as f:
         toml.dump(pyproject_data, f)
 
+    # Create a Mock for config manager methods and attach them
+    mock_get_repository = Mock()
+    mock_get_dependency_order = Mock()
+
     # Mock circular dependency in config
     circular_configs = [
         RepositoryConfig(
@@ -56,14 +60,16 @@ def test_dependency_cycle_detection(
         ),
     ]
 
-    mock_config_manager.get_repository.side_effect = lambda name: next(
+    mock_get_repository.side_effect = lambda name: next(
         (repo for repo in circular_configs if repo.name == name), None
     )
 
     # Mock get_dependency_order to raise an exception for circular dependency
-    mock_config_manager.get_dependency_order.side_effect = Exception(
-        "Circular dependency detected"
-    )
+    mock_get_dependency_order.side_effect = Exception("Circular dependency detected")
+
+    # Replace the methods on the mock config manager
+    mock_config_manager.get_repository = mock_get_repository
+    mock_config_manager.get_dependency_order = mock_get_dependency_order
 
     # Test that circular dependency is detected
     with pytest.raises(Exception, match="Circular dependency detected"):

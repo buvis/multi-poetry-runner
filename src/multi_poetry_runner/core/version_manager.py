@@ -47,6 +47,19 @@ class VersionManager:
             validate: Whether to run validation tests
         """
 
+        # Validate bump type at the beginning
+        valid_bump_types = {"patch", "minor", "major"}
+        if bump_type not in valid_bump_types:
+            if not validate:
+                raise ValueError(
+                    f"Invalid version type: {bump_type}. Must be one of {valid_bump_types}"
+                )
+            else:
+                console.print(
+                    f"[red]Invalid version type: {bump_type}. Must be one of {valid_bump_types}[/red]"
+                )
+                return False
+
         console.print(
             f"\n[bold]Version Bump: {repository} ({bump_type}{' alpha' if alpha else ''})[/bold]"
         )
@@ -241,6 +254,13 @@ class VersionManager:
     ) -> str:
         """Calculate new version based on current version and bump type."""
 
+        # Validate bump type
+        valid_bump_types = {"patch", "minor", "major"}
+        if bump_type not in valid_bump_types:
+            raise ValueError(
+                f"Invalid version type: {bump_type}. Must be one of {valid_bump_types}"
+            )
+
         # Parse current version
         # Support formats: "1.2.3", "1.2.3-alpha.1", "1.2.3+dev.123", etc.
         version_pattern = r"^(\d+)\.(\d+)\.(\d+)(?:-alpha\.(\d+))?(?:\+.*)?$"
@@ -249,48 +269,45 @@ class VersionManager:
         if not match:
             raise ValueError(f"Unable to parse version: {current_version}")
 
-        major, minor, patch, current_alpha = match.groups()
-        major, minor, patch = int(major), int(minor), int(patch)
-        current_alpha = int(current_alpha) if current_alpha else None
+        # Ensure string inputs are converted to integers, defaulting to 0 if None
+        major, minor, patch, current_alpha = [
+            int(group) if group is not None else 0 for group in match.groups()
+        ]
+
+        # Initialize variables for new version
+        new_major, new_minor, new_patch = major, minor, patch
+        new_alpha = current_alpha
 
         # Calculate new version based on bump type and alpha flag
         if alpha:
-            if current_alpha is not None:
+            if current_alpha > 0:
                 # Already an alpha version, just increment alpha number
-                new_major, new_minor, new_patch = major, minor, patch
                 new_alpha = current_alpha + 1
             else:
                 # Convert to alpha version with bump
                 new_alpha = 1
                 if bump_type == "patch":
-                    new_major, new_minor, new_patch = major, minor, patch + 1
+                    new_patch += 1
                 elif bump_type == "minor":
-                    new_major, new_minor, new_patch = major, minor + 1, 0
+                    new_minor += 1
+                    new_patch = 0
                 elif bump_type == "major":
-                    new_major, new_minor, new_patch = major + 1, 0, 0
-                else:
-                    # Default case to prevent undefined variables
-                    new_major, new_minor, new_patch = major, minor, patch
+                    new_major += 1
+                    new_minor = 0
+                    new_patch = 0
 
             return f"{new_major}.{new_minor}.{new_patch}-alpha.{new_alpha}"
         else:
             # Regular version bump (remove alpha if present)
-            if current_alpha is not None:
-                # If currently alpha, don't increment for release
-                if bump_type == "patch":
-                    new_major, new_minor, new_patch = major, minor, patch
-                elif bump_type == "minor":
-                    new_major, new_minor, new_patch = major, minor, 0
-                elif bump_type == "major":
-                    new_major, new_minor, new_patch = major, 0, 0
-            else:
-                # Normal increment for non-alpha versions
-                if bump_type == "patch":
-                    new_major, new_minor, new_patch = major, minor, patch + 1
-                elif bump_type == "minor":
-                    new_major, new_minor, new_patch = major, minor + 1, 0
-                elif bump_type == "major":
-                    new_major, new_minor, new_patch = major + 1, 0, 0
+            if bump_type == "patch":
+                new_patch += 1
+            elif bump_type == "minor":
+                new_minor += 1
+                new_patch = 0
+            elif bump_type == "major":
+                new_major += 1
+                new_minor = 0
+                new_patch = 0
 
             return f"{new_major}.{new_minor}.{new_patch}"
 

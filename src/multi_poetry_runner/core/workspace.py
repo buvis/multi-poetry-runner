@@ -87,8 +87,9 @@ Thumbs.db
             gitignore_path.write_text(gitignore_content.strip())
 
         # Create Makefile
-        makefile_content = """
-# Makefile for MPR workspace
+        makefile_path = self.workspace_root / "Makefile"
+        makefile_path.write_text(
+            """# Makefile for MPR workspace
 .PHONY: help dev remote test clean status
 
 help:
@@ -114,12 +115,11 @@ clean:
 status:
 	mpr workspace status
 """
+        )
 
-        makefile_path = self.workspace_root / "Makefile"
-        if not makefile_path.exists():
-            makefile_path.write_text(makefile_content.strip())
-
-        logger.info(f"Workspace '{name}' initialized at {self.workspace_root}")
+        # Create .dependency-mode file
+        dependency_mode_file = self.workspace_root / ".dependency-mode"
+        dependency_mode_file.write_text("remote\n")
 
     def add_repository(
         self,

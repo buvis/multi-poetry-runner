@@ -9,7 +9,6 @@ from typing import Any
 
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.table import Table
 
 from ..utils.config import ConfigManager, RepositoryConfig
 from ..utils.logger import get_logger
@@ -445,33 +444,19 @@ async def test_async_operations():
         if not self.test_results:
             return
 
-        table = Table(title="Test Results")
-        table.add_column("Repository", style="cyan")
-        table.add_column("Type", style="blue")
-        table.add_column("Status", style="green")
-        table.add_column("Coverage", style="yellow")
-
+        # Less rich-dependent output
+        logger.info("Test Results:")
         for repo_name, result in self.test_results.items():
-            status_icon = "✓" if result["success"] else "✗"
-            status_color = "green" if result["success"] else "red"
-            coverage_info = "✓" if result.get("coverage") else ""
+            status = "PASSED" if result["success"] else "FAILED"
+            logger.info(f"{repo_name}: {status} ({result['type']} tests)")
 
-            table.add_row(
-                repo_name,
-                result["type"],
-                f"[{status_color}]{status_icon}[/{status_color}]",
-                coverage_info,
-            )
-
-        console.print(table)
-
-        # Print summary
+        # Calculate summary
         total_tests = len(self.test_results)
         passed_tests = sum(1 for r in self.test_results.values() if r["success"])
         failed_tests = total_tests - passed_tests
 
-        console.print(
-            f"\n[bold]Summary: {passed_tests}/{total_tests} passed, {failed_tests} failed[/bold]"
+        logger.info(
+            f"Summary: {passed_tests}/{total_tests} passed, {failed_tests} failed"
         )
 
     def generate_test_report(self, output_format: str = "json") -> Path | None:
